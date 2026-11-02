@@ -1,0 +1,240 @@
+{
+  "_about": "Mock inputs for the robotaxi crosswalk example of the SOTIF course (doc 14), structured along ISO 21448:2022. All values are synthetic, including the human benchmark. Replace the values with your own data and keep the keys. Keys starting with '_' are comments and are ignored by the loader; unknown keys are rejected. Test cost is deliberately not an input: cost may decide how evidence is produced, never how much risk is accepted.",
+  "case_name": "robotaxi",
+  "function": "Urban robotaxi (SAE Level 4), roads up to 50 km/h, day and night, dry and wet.",
+  "hazardous_behaviours": [
+    {
+      "_note": "Cl. 6.3. Vehicle level: no situation named. ISO 21448 6.5 sets acceptance criteria per hazardous behaviour.",
+      "id": "HB-1",
+      "description": "Does not yield: no or too little deceleration although another road user has right of way"
+    },
+    {
+      "id": "HB-2",
+      "description": "Unintended braking"
+    },
+    {
+      "id": "HB-3",
+      "description": "Unintended acceleration"
+    },
+    {
+      "id": "HB-4",
+      "description": "Unintended steering"
+    },
+    {
+      "id": "HB-5",
+      "description": "Insufficient deceleration"
+    },
+    {
+      "id": "HB-6",
+      "description": "Loss of braking, steering or propulsion"
+    }
+  ],
+  "hazardous_events": [
+    {
+      "_units": "Cl. 6.3. One hazardous behaviour (hb_id) in one operational situation. severity and controllability: rating text from the HARA. share_of_harm_class_budget: fraction of the harm-class budget given to this event [-]; per harm class the shares of all hazardous events (of all hazardous behaviours) must sum to at most 1.",
+      "id": "HE-1.1",
+      "hb_id": "HB-1",
+      "operational_situation": "Pedestrian about to cross at a zebra crossing",
+      "harm_class": "pedestrian injury",
+      "severity": "S2-S3",
+      "controllability": "low",
+      "share_of_harm_class_budget": 0.2
+    },
+    {
+      "id": "HE-1.2",
+      "hb_id": "HB-1",
+      "operational_situation": "Cyclist going straight while the robotaxi turns right",
+      "harm_class": "cyclist injury",
+      "severity": "S2-S3",
+      "controllability": "low",
+      "share_of_harm_class_budget": 0.2
+    },
+    {
+      "id": "HE-1.3",
+      "hb_id": "HB-1",
+      "operational_situation": "Oncoming vehicle at an unprotected left turn",
+      "harm_class": "occupant injury",
+      "severity": "S1-S3",
+      "controllability": "medium",
+      "share_of_harm_class_budget": 0.1
+    },
+    {
+      "id": "HE-1.4",
+      "hb_id": "HB-1",
+      "operational_situation": "Vehicle with right of way at an unsignalised junction",
+      "harm_class": "occupant injury",
+      "severity": "S1-S3",
+      "controllability": "medium",
+      "share_of_harm_class_budget": 0.1
+    }
+  ],
+  "selected_hazardous_event": "HE-1.1",
+  "benchmark": {
+    "_units": "Cl. 6.5. harm_class: must equal the harm class of the selected hazardous event; events: human harm events over the benchmark exposure [count]; exposure_hours: human driving hours in a comparable ODD [h]. Alternative to exposure_hours (give exactly one of the two): miles [mi] with average_speed_mph [mi/h], then exposure = miles / speed. source_note: where the data come from; synthetic: true marks placeholder data (label 'input (synthetic)'), set it to false or remove it for real data",
+    "harm_class": "pedestrian injury",
+    "events": 50,
+    "exposure_hours": 10000000.0,
+    "source_note": "Synthetic placeholder. Replace with human accident data matched to the ODD (road type, speed, time of day), e.g. GIDAS or national statistics.",
+    "synthetic": true
+  },
+  "criterion": {
+    "_units": "Cl. 6.5. margin_factor: robotaxi harm rate / human harm rate [-] (0.1 = ten times better); round_A_H_to: round A_H to the nearest multiple of this [1/h], null = no rounding. The share of the harm-class budget comes from the selected hazardous event.",
+    "margin_factor": 0.1,
+    "round_A_H_to": null
+  },
+  "chain": {
+    "_units": "Cl. 6.4, for the selected hazardous event. P_E = P(E | HB), P_C = P(not C | E), P_S = P(S | not C); all [-], in (0, 1]",
+    "P_E": 0.5,
+    "P_C": 0.5,
+    "P_S": 0.8
+  },
+  "confidence": {
+    "_units": "C: joint confidence [-]; m_bounds: number of simultaneous bounds, null = 2K + 2",
+    "C": 0.95,
+    "m_bounds": null
+  },
+  "fleet": {
+    "_units": "cars [count]; hours_per_day_per_car [h/day]",
+    "cars": 100,
+    "hours_per_day_per_car": 20
+  },
+  "driving": {
+    "_units": "pilot_hours: fleet hours used to estimate exposure for planning [h]; confirmatory_hours: fleet hours on the frozen release for the verdict [h]; discovery_hours: hours searched for scenarios outside the K logical scenarios [h] (here the same 20,000 h as the confirmatory driving)",
+    "pilot_hours": 1000,
+    "confirmatory_hours": 20000,
+    "discovery_hours": 20000
+  },
+  "budget": {
+    "_units": "reserve_fraction: share of R_HB kept for unknown scenarios (Cl. 11) [-], in [0, 1); allocation_rule: 'equal_protection' (default: same allowed failure probability per encounter in every logical scenario), 'proportional_to_human' (needs human_share), 'equal_split' (for comparison only) or 'fixed' (needs fixed_share)",
+    "reserve_fraction": 0.1,
+    "allocation_rule": "equal_protection"
+  },
+  "unknown": {
+    "_units": "p_new: failure probability per encounter with an unknown scenario [-], argued from a design rule, not tested statistically; N1: kinds of scenario seen exactly once in the discovery data [count] (a kind outside the K logical scenarios would show up here; 0 = none appeared); N_discovery: encounters classified in the discovery data [count], null = unknown (here 80,000 + 10,000 + 6,000 from the confirmatory driving)",
+    "p_new": 0.0001,
+    "p_new_rationale": "Functional restriction (Cl. 8.3.3): any unclassified object within 3 m of a crosswalk caps the speed at 10 km/h; the fallback is tested on its own.",
+    "G_unknown": null,
+    "_G_unknown": "G_unknown: probability that one occurrence of the behaviour in an unknown scenario causes the harm [-], in (0, 1]; null = the common chain of the hazardous event (P_E P_C P_S). Only matters when logical scenarios have their own chains; a conservative choice is the largest G_k.",
+    "N1": 0,
+    "N_discovery": 96000
+  },
+  "triggering_conditions": [
+    {
+      "_units": "Cl. 7.3. A triggering condition is a region of the parameter space inside one or more logical scenarios: logical_scenarios = list of LS ids, or \"all\". It holds no budget; it steers the targeted cases (Cl. 10) and the importance sampling (Annex C.5).",
+      "id": "TC-1",
+      "description": "Occlusion by a stationary vehicle (parked car, van, bus)",
+      "parameter_region": "occluder type car, van or bus between pedestrian and robotaxi; defines LS-2",
+      "logical_scenarios": [
+        "LS-2"
+      ]
+    },
+    {
+      "id": "TC-2",
+      "description": "Low light (dusk, night)",
+      "parameter_region": "light = dusk or night",
+      "logical_scenarios": "all"
+    },
+    {
+      "id": "TC-3",
+      "description": "Wet road, reflections",
+      "parameter_region": "road = wet",
+      "logical_scenarios": "all"
+    },
+    {
+      "id": "TC-4",
+      "description": "Small pedestrian (child)",
+      "parameter_region": "pedestrian size = child",
+      "logical_scenarios": "all"
+    },
+    {
+      "id": "TC-5",
+      "description": "Short time to arrival at high approach speed",
+      "parameter_region": "time to arrival <= 1.5 s at approach speed >= 40 km/h",
+      "logical_scenarios": [
+        "LS-1",
+        "LS-2"
+      ]
+    }
+  ],
+  "logical_scenarios": [
+    {
+      "_units": "Derived from the selected hazardous event (functional -> logical -> concrete scenarios). N_pilot, N_conf: encounters counted in pilot / confirmatory driving [count]; importance_factor w_k: largest importance weight p/q in the failure region [-], in (0, 1] (1 = plain Monte Carlo); human_share s_k: share of this harm that human drivers cause in this LS [-], all LS sum to 1, null = not known; human_cap_behaviour_rate h_k: human-level rate of the behaviour in this LS [1/h], null = no cap; targeted_cases, targeted_failures: Clause 10 cases built from the triggering conditions and how many failed [count]; failures j_k: failures in the confirmatory simulation runs [count]; runs_executed: runs actually executed, null = the planned n_k; fixed_share: only for allocation_rule 'fixed', all LS sum to 1. Optional per-LS harm chain (Putze et al. 2023): P_E, P_C, P_S [-] in (0, 1], null = the chain of the hazardous event; severity_curve {beta0, beta1, impact_speed, source_note}: P_S = 1/(1 + exp(-(beta0 + beta1 impact_speed))), instead of P_S (not both), impact_speed in the unit the coefficients were fitted for. independent_units_note: why the runs and targeted cases are independent evidence units (text)",
+      "id": "LS-1",
+      "name": "Pedestrian approaches the crossing in clear view",
+      "parameters": "ego speed 20-50 km/h; pedestrian speed 0.8-2.5 m/s; time to arrival 0.5-5 s; light (day, dusk, night); road (dry, wet); pedestrian size (adult, child)",
+      "N_pilot": 4000,
+      "N_conf": 80000,
+      "importance_factor": 0.01,
+      "human_share": 0.5,
+      "human_cap_behaviour_rate": 2.5e-06,
+      "targeted_cases": 48,
+      "targeted_case_design": "light (day, dusk, night) x road (dry, wet) x pedestrian (adult, child) x 4 approach speeds (20, 30, 40, 50 km/h) = 48",
+      "targeted_failures": 0,
+      "failures": 0,
+      "runs_executed": null,
+      "fixed_share": null,
+      "P_E": null,
+      "P_C": null,
+      "P_S": null,
+      "severity_curve": null,
+      "independent_units_note": "One run = one concrete scenario drawn independently from the LS-1 parameter distribution (own seed); each targeted case is a distinct parameter combination; no frames or slices of one run are counted separately."
+    },
+    {
+      "id": "LS-2",
+      "name": "Pedestrian emerges from behind a stationary vehicle at the crossing",
+      "parameters": "as LS-1, plus occluder type (car, van, bus) and lateral gap between occluder and crossing",
+      "N_pilot": 500,
+      "N_conf": 10000,
+      "importance_factor": 0.05,
+      "human_share": 0.35,
+      "human_cap_behaviour_rate": 1.75e-06,
+      "targeted_cases": 144,
+      "targeted_case_design": "light (day, dusk, night) x road (dry, wet) x pedestrian (adult, child) x 4 approach speeds (20, 30, 40, 50 km/h) x 3 occluders (car, van, bus) = 144",
+      "targeted_failures": 0,
+      "failures": 0,
+      "runs_executed": null,
+      "fixed_share": null,
+      "P_E": null,
+      "P_C": null,
+      "P_S": null,
+      "severity_curve": null,
+      "independent_units_note": "As LS-1; each occluder type is tested under every triggering condition it is combined with, since evidence under one condition does not carry over to another."
+    },
+    {
+      "id": "LS-3",
+      "name": "Robotaxi turns into the street and meets a pedestrian on the crossing",
+      "parameters": "turning speed 10-30 km/h; pedestrian position on the crossing; pedestrian speed 0.8-2.5 m/s; light (day, dusk, night); road (dry, wet); pedestrian size (adult, child)",
+      "N_pilot": 300,
+      "N_conf": 6000,
+      "importance_factor": 0.1,
+      "human_share": 0.15,
+      "human_cap_behaviour_rate": 7.5e-07,
+      "targeted_cases": 48,
+      "targeted_case_design": "light (day, dusk, night) x road (dry, wet) x pedestrian (adult, child) x 4 approach (turning) speeds (10, 15, 20, 30 km/h) = 48",
+      "targeted_failures": 0,
+      "failures": 0,
+      "runs_executed": null,
+      "fixed_share": null,
+      "P_E": null,
+      "P_C": null,
+      "P_S": null,
+      "severity_curve": null,
+      "independent_units_note": "As LS-1."
+    }
+  ],
+  "simulator": {
+    "_units": "Annex C.1. m_pairs: paired sim/real runs [count]; mu_hat, sigma_hat: mean and standard deviation of e = y_sim - y_real [m], where y is the distance between robotaxi and pedestrian when the pedestrian reaches the conflict zone; z_mode: 'fixed' or 'auto'; z_fixed [-]; z_auto_fraction f [-]: auto mode picks z with Phi(-z) = f * min_k p_k*",
+    "m_pairs": 180,
+    "mu_hat": 0.05,
+    "sigma_hat": 0.15,
+    "z_mode": "fixed",
+    "z_fixed": 6.5,
+    "z_auto_fraction": 0.01
+  },
+  "operation": {
+    "_units": "Cl. 13. fleet_hours_per_year: planned fleet driving per year of operation [h/yr] (100 cars x 20 h x 365 days); alt_factor a [-], > 1: the e-process tests R_HB against the alternative a x R_HB, null = 2; hb_detection_rule: how a hazardous behaviour is counted in the field (text)",
+    "fleet_hours_per_year": 730000,
+    "alt_factor": 2,
+    "hb_detection_rule": "HB-1 is counted when the robotaxi enters the conflict zone of a crossing above 10 km/h while a pedestrian with right of way is less than 2 s from it (on-board monitoring, Cl. 13.3)."
+  }
+}

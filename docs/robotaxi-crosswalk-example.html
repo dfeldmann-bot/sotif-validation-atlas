@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>Robotaxi Crosswalk Example</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: course reading column (Tufte style) with wide figures; numbered steps follow the real order of work.
+   Colour of every symbol = its kind: requirement, world, system, test design, confidence (same as the Atlas). */
+:root{
+  --paper:#f6f7f5; --ink:#1a2220; --ink-soft:#4a5654; --ink-mute:#7d8986; --rule:#d5dbd8; --panel:#ebefed; --card:#ffffff;
+  --c-req:#0e6b63; --c-world:#2563a6; --c-sys:#7444b3; --c-test:#3d7a1f; --c-conf:#b0306f;
+  --caution:#a8551c; --good:#1f7a3d; --bad:#b3261e;
+  --serif:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  --label:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --math:"STIX Two Math","Cambria Math","Latin Modern Math","Noto Sans Math",math;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121816; --ink:#e3e9e6; --ink-soft:#a3b0ac; --ink-mute:#73807c; --rule:#2c3734; --panel:#1b2421; --card:#18201d;
+  --c-req:#4fb8ad; --c-world:#74a9e8; --c-sys:#b593ee; --c-test:#8cc46a; --c-conf:#ec7fb2; --caution:#e0954f; --good:#63c283; --bad:#f08a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121816; --ink:#e3e9e6; --ink-soft:#a3b0ac; --ink-mute:#73807c; --rule:#2c3734; --panel:#1b2421; --card:#18201d;
+  --c-req:#4fb8ad; --c-world:#74a9e8; --c-sys:#b593ee; --c-test:#8cc46a; --c-conf:#ec7fb2; --caution:#e0954f; --good:#63c283; --bad:#f08a80; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 17px/1.62 var(--serif);padding-block:2.2rem 4rem;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.page{max-width:60rem;margin:0 auto}
+.col{max-width:42rem}
+math{font-family:var(--math)}
+.cat-req{color:var(--c-req)} .cat-world{color:var(--c-world)} .cat-sys{color:var(--c-sys)} .cat-test{color:var(--c-test)} .cat-conf{color:var(--c-conf)}
+.crumbs{font:500 13px/1.3 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);display:flex;gap:.8rem;flex-wrap:wrap}
+.crumbs a{color:inherit}
+a{color:var(--c-req);text-underline-offset:2px}
+h1{font-weight:600;font-size:2.4rem;line-height:1.1;margin:.4rem 0 .6rem;letter-spacing:-.01em;text-wrap:balance}
+h2{font-weight:600;font-size:1.65rem;line-height:1.2;margin:3.2rem 0 .6rem;text-wrap:balance;display:flex;gap:.7rem;align-items:baseline}
+h2 .n{font:600 1rem var(--label);color:var(--c-req);letter-spacing:.06em;flex:none}
+h3{font:600 14px/1.3 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft);margin:1.8rem 0 .5rem}
+.dek{font-size:1.25rem;line-height:1.45;color:var(--ink-soft);font-style:italic;margin:0 0 1.5rem}
+p{margin:0 0 1rem}
+.mb{background:var(--panel);border-radius:4px;padding:1rem;margin:1rem 0 1.2rem;overflow-x:auto;font-size:1.3rem;text-align:center}
+.mb.num{background:transparent;border:1px dashed var(--rule);font-size:1.12rem}
+.m{white-space:nowrap}
+.who{display:flex;flex-wrap:wrap;gap:6px 14px;font:500 13.5px/1.4 var(--label);color:var(--ink-soft);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:.5rem 0;margin:1rem 0 1.2rem}
+.who b{font-weight:600;color:var(--ink);letter-spacing:.03em;text-transform:uppercase;font-size:12px;margin-right:4px}
+.assume{border-left:3px solid var(--caution);padding:.2rem 0 .2rem 1rem;margin:1.3rem 0}
+.assume>strong:first-child{display:block;font:600 13px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--caution);margin-bottom:.4rem}
+.key{border:1px solid var(--rule);border-radius:4px;background:var(--card);padding:1rem 1.1rem;margin:1.2rem 0 2rem}
+.key .kt{font:600 13px/1 var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--c-req);margin-bottom:.7rem}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font:500 14px var(--label)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:11px;height:11px;border-radius:3px;display:inline-block;background:currentColor}
+.spine{display:grid;grid-template-columns:repeat(auto-fit,minmax(9.5rem,1fr));gap:8px;margin-top:.6rem}
+.spine div{background:var(--panel);border-radius:4px;padding:.55rem .7rem;min-width:0}
+.spine .k{font:500 12.5px/1.25 var(--label);color:var(--ink-soft)}
+.spine .v{font:500 15px/1.35 var(--mono);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.spine .ok{color:var(--good)}
+.chain{display:flex;flex-wrap:wrap;align-items:stretch;gap:6px;margin:1.2rem 0}
+.chain .st{flex:1 1 8.5rem;min-width:0;border:1px solid var(--rule);background:var(--card);border-radius:6px;padding:.6rem .7rem;position:relative}
+.chain .st .t{font:600 13px/1.2 var(--label);letter-spacing:.05em;text-transform:uppercase}
+.chain .st .d{font-size:14.5px;line-height:1.35;margin-top:.25rem}
+.chain .st .pr{font:500 14px var(--mono);margin-top:.35rem}
+.chain .arr{align-self:center;color:var(--ink-mute);font-size:20px;flex:none}
+.tbl-wrap{overflow-x:auto;margin:1rem 0 1.4rem}
+table{border-collapse:collapse;font-variant-numeric:tabular-nums;font-size:15px;min-width:100%}
+th,td{text-align:right;padding:.4rem .7rem;border-bottom:1px solid var(--rule);vertical-align:top}
+th{font:600 13px/1.25 var(--label);letter-spacing:.04em;color:var(--ink-soft)}
+th:first-child,td:first-child{text-align:left}
+td{font-family:var(--mono);font-size:14px}
+td.txt{font-family:var(--serif);font-size:15px;text-align:left}
+tr.total td{font-weight:500;border-top:2px solid var(--ink-mute)}
+.pass{color:var(--good);font-weight:600} .fail{color:var(--bad);font-weight:600}
+.lane-wrap{overflow-x:auto;margin:1.2rem 0 1.5rem;border:1px solid var(--rule);border-radius:6px;background:var(--card)}
+.lanes{display:grid;grid-template-columns:9rem repeat(6,minmax(9.5rem,1fr));min-width:68rem}
+.lanes>div{padding:.55rem .65rem;border-bottom:1px solid var(--rule);border-right:1px solid var(--rule);font-size:14px;line-height:1.38}
+.lanes .ph{font:600 12.5px/1.25 var(--label);letter-spacing:.05em;text-transform:uppercase;background:var(--panel);color:var(--ink)}
+.lanes .ph small{display:block;font-weight:500;letter-spacing:0;text-transform:none;color:var(--ink-soft);font-size:12.5px}
+.lanes .role{font:600 13px/1.25 var(--label);letter-spacing:.04em;text-transform:uppercase;color:var(--rc);background:color-mix(in srgb,var(--rc) 7%,transparent)}
+.lanes .out{font:500 12px/1.3 var(--mono);color:var(--rc);display:block;margin-top:.25rem}
+.lanes .empty{color:var(--ink-mute)}
+.calc{border:1px solid var(--rule);background:var(--panel);border-radius:6px;padding:1rem 1rem 1.1rem;margin:1.4rem 0 2rem}
+.calc .ct{font:600 13px/1 var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--c-req);margin:0 0 .8rem}
+.calc table input{width:6.2rem;font:400 14px var(--mono);color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:3px;padding:.3rem .4rem;text-align:right}
+.calc input:focus-visible{outline:2px solid var(--c-req);outline-offset:1px}
+.bars{display:grid;gap:8px;margin-top:.8rem}
+.bar{display:grid;grid-template-columns:7.5rem 1fr 5.5rem;gap:8px;align-items:center;font:500 13px var(--label)}
+.bar .tr{height:14px;border-radius:2px;background:var(--rule);position:relative;overflow:hidden}
+.bar .fl{position:absolute;inset:0 auto 0 0;background:var(--c-req)}
+.bar .fl.eq{opacity:.35}
+.bar .v{font:500 13px var(--mono);text-align:right}
+.verdict{border:2px solid var(--good);border-radius:6px;padding:.8rem 1rem;margin:1rem 0 1.4rem;font-size:16px}
+.verdict.bad{border-color:var(--bad)}
+.verdict .vt{font:600 14px/1 var(--label);letter-spacing:.07em;text-transform:uppercase;margin-bottom:.4rem}
+.verdict .vt.p{color:var(--good)} .verdict .vt.f{color:var(--bad)}
+ol.steps{padding-left:1.3rem} ol.steps li{margin-bottom:.6rem}
+.sources{font-size:15px;line-height:1.5}
+.sources li{margin-bottom:.35rem}
+.plain{background:color-mix(in srgb,var(--c-req) 7%,var(--paper));border-radius:6px;padding:.8rem 1rem;margin:1rem 0 1.3rem;font-size:16.5px}
+.eqsrc{font:500 13.5px/1.45 var(--label);color:var(--ink-soft);margin:-.6rem 0 1.2rem;letter-spacing:.01em}
+.eqsrc b{font-weight:600;letter-spacing:.06em;text-transform:uppercase;font-size:11.5px;color:var(--ink);margin-right:6px}
+.eqsrc a{color:var(--c-req)}
+.eqsrc .ck,.eqsrc .nc,.eqsrc .oc{font-size:11px;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:1px 6px;margin-left:2px;white-space:nowrap}
+.eqsrc .ck{color:var(--good);border:1px solid var(--good)} .eqsrc .nc{color:var(--ink-soft);border:1px solid var(--rule)} .eqsrc .oc{color:var(--caution);border:1px solid var(--caution)}
+.plain .lk{display:block;margin-top:.55rem;padding-top:.45rem;border-top:1px solid var(--rule);font:500 13px/1.4 var(--label);color:var(--ink-soft)}
+.plain .lk a{color:var(--c-req)}
+.margin-note{font:500 13px/1.4 var(--label);color:var(--ink-soft)}
+@media (min-width:1180px){
+  .page{max-width:62rem}
+  .plain{float:right;clear:right;width:16rem;margin:.2rem -18rem 1rem 1rem;font-size:14.5px;line-height:1.5;padding:.7rem .85rem}
+}
+.plain .pl{display:block;font:600 12.5px/1 var(--label);letter-spacing:.07em;text-transform:uppercase;color:var(--c-req);margin-bottom:.45rem}
+.ideas{display:grid;gap:12px;margin:1rem 0}
+.ideas .idea{border-left:3px solid var(--c-req);padding-left:1rem}
+.ideas .idea b.h{display:block;font:600 13.5px/1.3 var(--label);letter-spacing:.05em;text-transform:uppercase;color:var(--c-req);margin-bottom:.3rem}
+dl.gloss dt{font-weight:600;margin-top:.7rem} dl.gloss dd{margin:.15rem 0 0;color:var(--ink-soft)}
+@media (max-width:640px){body{font-size:16.5px}h1{font-size:1.9rem}h2{font-size:1.35rem}.mb{font-size:1.1rem}.bar{grid-template-columns:5.5rem 1fr 4.6rem}}
+h2 .iso{margin-left:auto;font:600 12px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--c-req);border:1px solid var(--c-req);border-radius:999px;padding:5px 9px;white-space:nowrap;align-self:center}
+.flow{list-style:none;padding:0;margin:.6rem 0 0;display:grid;gap:4px}
+.flow li{display:grid;grid-template-columns:5.2rem 1fr;gap:10px;font:500 14px/1.4 var(--label);color:var(--ink-soft);align-items:baseline}
+.flow li b{font-weight:600;color:var(--c-req);letter-spacing:.03em}
+.flow li a{color:var(--ink)}
+.calc select{font:400 14px var(--label);color:var(--ink);background:var(--paper);border:1px solid var(--rule);border-radius:3px;padding:.3rem .4rem}
+.calc .ctl{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:.7rem;font:500 14px var(--label);color:var(--ink-soft)}
+.lit{border:1px solid var(--rule);border-radius:6px;padding:.7rem 1rem;margin:1rem 0 1.4rem;background:var(--card)}
+.lit .lt{font:600 12.5px/1 var(--label);letter-spacing:.07em;text-transform:uppercase;color:var(--c-sys);margin-bottom:.45rem}
+.lit p{margin:0;font-size:15.5px}
+code{overflow-wrap:anywhere}
+td:first-child:not(.txt){white-space:nowrap}
+</style>
+
+<main class="page">
+<div class="col">
+<nav class="crumbs" aria-label="Course"><a href="../README.md">SOTIF Risk Course</a><span>Worked example</span><a href="validation-atlas.html">Open the atlas</a></nav>
+<h1>Robotaxi crosswalk example</h1>
+<p class="dek">One hazardous behaviour of an urban robotaxi, taken through the SOTIF activities of ISO 21448:2022: hazard identification, acceptance criterion, triggering conditions, verification and validation strategy, known and unknown scenarios, release and field monitoring. Every number is computed in the course workbook.</p>
+
+<div class="key">
+  <div class="kt">The ISO 21448 activities on this page</div>
+  <ol class="flow">
+    <li><b>Cl. 5</b><a href="#s01">01 · Specification of the function and ODD</a></li>
+    <li><b>Cl. 6.3–6.4</b><a href="#s02">02 · Hazard identification and risk evaluation</a></li>
+    <li><b>Cl. 6.5</b><a href="#s03">03 · Acceptance criterion for the residual risk</a></li>
+    <li><b>Annex C</b><a href="#s04">04–05 · Tolerable behaviour rate and the naive validation target</a></li>
+    <li><b>Cl. 7–8</b><a href="#s06">06 · Functional insufficiencies, triggering conditions, modifications</a></li>
+    <li><b>Cl. 9</b><a href="#s07">07 · Verification and validation strategy, validation targets</a></li>
+    <li><b>Cl. 10</b><a href="#s08">08 · Evaluation of known scenarios</a></li>
+    <li><b>Cl. 11</b><a href="#s09">09 · Evaluation of unknown scenarios</a></li>
+    <li><b>Cl. 12</b><a href="#s10">10 · Evaluation of the achievement of the SOTIF</a></li>
+    <li><b>Cl. 13</b><a href="#s11">11 · Operation phase</a></li>
+  </ol>
+  <div class="kt" style="margin-top:1.1rem">How to read the equations</div>
+  <p style="margin-bottom:.6rem">Each symbol is coloured by what kind of quantity it is. The colour tells you who supplies the number.</p>
+  <div class="legend">
+    <span class="cat-req"><i></i>Requirement: you decide it</span>
+    <span class="cat-world"><i></i>World: measured on real roads</span>
+    <span class="cat-sys"><i></i>System: measured by testing the car</span>
+    <span class="cat-test"><i></i>Test design: your choice of how to test</span>
+    <span class="cat-conf"><i></i>Confidence: how sure the claim is</span>
+  </div>
+  <div class="kt" style="margin-top:1.1rem">The example in eight numbers</div>
+  <div class="spine">
+    <div><div class="k">Acceptance criterion A<sub>H</sub></div><div class="v">1.0·10⁻⁷ /h</div><div class="k">once per 10 million hours</div></div>
+    <div><div class="k">Tolerable behaviour rate</div><div class="v">5.0·10⁻⁷ /h</div><div class="k">once per 2 million hours</div></div>
+    <div><div class="k">Naive road test</div><div class="v">6.0·10⁶ h ≈ 8 years</div></div>
+    <div><div class="k">Logical scenarios</div><div class="v">3 + reserve</div></div>
+    <div><div class="k">Allowed per encounter</div><div class="v">1 in 11.3 million</div></div>
+    <div><div class="k">Evidence</div><div class="v">240 targeted cases, 9.1·10⁶ sampled runs</div></div>
+    <div><div class="k">Fleet driving</div><div class="v">21,000 h</div></div>
+    <div><div class="k">Verdict (Cl. 12)</div><div class="v ok">4.57·10⁻⁷ ≤ 5·10⁻⁷ ✓</div></div>
+  </div>
+</div>
+<p style="font-size:15px;color:var(--ink-soft)">Every formula has a source line underneath. <b>Checked</b> means the location is confirmed in the course verification log, <b>location not checked</b> means the source is right but the page or section has not been verified, <b>derived here</b> means the step is this course’s own construction. All values are synthetic placeholders, including the human accident data.</p>
+
+<h2 id="s00"><span class="n">00</span>Before you start: six ideas</h2>
+<p>This page needs no statistics beyond these six ideas. Each takes a minute.</p>
+<div class="ideas">
+<div class="idea"><b class="h">1 · Reading very small numbers</b>Safety targets are tiny, so they are written as powers of ten. 10⁻⁶ is 0.000001, one in a million. 10⁻⁷ is one in ten million. 5·10⁻⁷ per hour is 0.0000005 per hour. The quick way to read a rate: 1 divided by it is the waiting time. 1 ÷ (5·10⁻⁷) = 2,000,000, so “once every 2 million hours”.</div>
+<div class="idea"><b class="h">2 · Rates and chances</b>A rate counts per hour (“4 crossings per hour”). A chance is per event (“fails in 1 of 10 million crossings”). Rate × chance is a new rate: 4 × 1/10,000,000 = 4 failures per 10 million hours. Most of this page is that one multiplication.</div>
+<div class="idea"><b class="h">3 · Chains of chances multiply</b>Harm needs several things to go wrong in a row. If each link has a chance, multiply them: 0.5 × 0.5 × 0.8 = 0.2, so 1 in 5.</div>
+<div class="idea"><b class="h">4 · You cannot measure “zero”, only bound it</b>No failures in a test does not prove there are none, only that they are rare. The rule of three: if nothing happened in n tries or hours, the rate is very likely below 3 ÷ n. Why 3? If 3 events were expected, seeing none happens only 5 % of the time.</div>
+<div class="idea"><b class="h">5 · “95 % confident” and upper bounds</b>Counts vary by luck, so we never trust the plain average. We use an upper bound: the most pessimistic value that still fits the data. “95 % confident” means this way of calculating lands above the true value at least 95 times in 100.</div>
+<div class="idea"><b class="h">6 · Test dangerous cases more, weigh them less</b>Most crossings are easy. The hard ones are simulated more often than they happen on real roads, and each such result counts for less, like a survey that interviews extra people in a small town and weights their answers down.</div>
+</div>
+<p style="font-size:15px;color:var(--ink-soft)">Every formula has an “In plain words” note beside it (in the margin on wide screens) that redoes it with numbers. Each note links to a step-by-step lesson in the atlas that builds the maths up from school level.</p>
+
+<h2 id="s01"><span class="n">01</span>Specification of the function and ODD<span class="iso">Cl. 5</span></h2>
+<div class="who"><span><b>Who</b>System and safety leads</span><span><b>When</b>Concept phase</span><span><b>Work product</b>Specification of the functionality (5.5)</span></div>
+<p>SOTIF starts from what the function is supposed to do and where. Everything later refers back to this specification, so it has to be precise enough to decide whether a behaviour is wrong.</p>
+<div class="tbl-wrap"><table><tbody>
+<tr><td class="txt"><b>Function</b></td><td class="txt">Urban robotaxi, SAE Level 4, no safety driver.</td></tr>
+<tr><td class="txt"><b>ODD</b></td><td class="txt">Roads up to 50 km/h, day and night, dry and wet. Heavy snow and fog are outside the ODD.</td></tr>
+<tr><td class="txt"><b>Relevant intended behaviour</b></td><td class="txt">Yields to every road user with right of way: pedestrians at zebra crossings, cyclists when turning, priority traffic at junctions.</td></tr>
+<tr><td class="txt"><b>Measurable definition</b></td><td class="txt">“Does not yield” = enters a conflict zone above 10 km/h while a road user with right of way is less than 2 s from it. This makes the behaviour countable in logs and in simulation.</td></tr>
+</tbody></table></div>
+<p class="eqsrc"><b>Source</b> ISO 21448:2022, Clause 5, 5.2 Specification of the functionality <span class="nc">location not checked</span>; the measurable definition is this example’s own <span class="oc">derived here</span>.</p>
+
+<h2 id="s02"><span class="n">02</span>Hazard identification and risk evaluation<span class="iso">Cl. 6.3–6.4</span></h2>
+<div class="who"><span><b>Who</b>Safety lead with the HARA team</span><span><b>When</b>Concept phase</span><span><b>Work product</b>Hazardous behaviours, hazardous events, S and C (6.6)</span></div>
+<p>ISO 21448 borrows the hazard analysis method of ISO 26262 but asks a different question: not “what if a component fails?” but “what if the intended function is not good enough?”.</p>
+<aside class="plain"><span class="pl">In plain words</span>A hazardous behaviour is what the car does, described without the setting: not yielding, braking for no reason. It becomes dangerous only where someone is exposed, such as a pedestrian stepping onto a zebra crossing. That combination is the hazardous event. One behaviour has several hazardous events, each hurting a different kind of road user.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-chain">Chain rule</a> · On the map: <a href="validation-atlas.html#hz">Hazard identification</a></span></aside>
+<h3>Hazardous behaviours, at vehicle level</h3>
+<p>A hazardous behaviour names what the vehicle does wrong, with no situation in it.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>ID</th><th>Hazardous behaviour</th><th>Typical functional insufficiency</th></tr></thead>
+<tbody>
+<tr><td>HB-1</td><td class="txt"><b>Does not yield:</b> no or too little deceleration although another road user has right of way</td><td class="txt">Road user detected late, intent misjudged, yield decision too late</td></tr>
+<tr><td>HB-2</td><td class="txt">Unintended braking</td><td class="txt">False detection (ghost object, reflection)</td></tr>
+<tr><td>HB-3</td><td class="txt">Unintended acceleration</td><td class="txt">Wrong free-space estimate, misread signal</td></tr>
+<tr><td>HB-4</td><td class="txt">Unintended steering</td><td class="txt">Wrong lane or object geometry</td></tr>
+<tr><td>HB-5</td><td class="txt">Insufficient deceleration</td><td class="txt">Late detection, friction misjudged</td></tr>
+<tr><td>HB-6</td><td class="txt">Loss of braking, steering or propulsion</td><td class="txt">Degradation in planning or control not detected</td></tr>
+</tbody></table></div>
+<h3>Hazardous events: behaviour × operational situation</h3>
+<p>HB-1 only causes harm in an operational situation where someone is exposed. Each combination is a hazardous event with its own harm class, rated for severity (S) and controllability (C).</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>ID</th><th>Operational situation</th><th>Harm class</th><th>S</th><th>C</th><th>Share of class budget</th></tr></thead>
+<tbody>
+<tr><td>HE-1.1</td><td class="txt">Pedestrian about to cross at a zebra crossing</td><td class="txt">Pedestrian injury</td><td>S2–S3</td><td>low</td><td>0.2</td></tr>
+<tr><td>HE-1.2</td><td class="txt">Cyclist going straight while the robotaxi turns right</td><td class="txt">Cyclist injury</td><td>S2–S3</td><td>low</td><td>0.2</td></tr>
+<tr><td>HE-1.3</td><td class="txt">Oncoming vehicle at an unprotected left turn</td><td class="txt">Occupant injury</td><td>S1–S3</td><td>medium</td><td>0.1</td></tr>
+<tr><td>HE-1.4</td><td class="txt">Vehicle with right of way at an unsignalised junction</td><td class="txt">Occupant injury</td><td>S1–S3</td><td>medium</td><td>0.1</td></tr>
+</tbody></table></div>
+<p>This example follows HE-1.1. Keeping behaviour and situation apart matters: ISO 21448 sets an acceptance criterion per hazardous behaviour, and HB-1 must also be shown safe at turns and junctions, each with its own budget.</p>
+<h3>From ratings to probabilities</h3>
+<p>For the quantitative argument, the HARA ratings become the probabilities of the harm chain. For HE-1.1 and any reported injury:</p>
+<div class="chain" role="img" aria-label="Chain from hazardous behaviour to harm with probabilities 0.5, 0.5 and 0.8">
+  <div class="st"><div class="t cat-sys">Behaviour</div><div class="d">Does not yield (HB-1)</div><div class="pr">rate R<sub>HB</sub></div></div><span class="arr" aria-hidden="true">→</span>
+  <div class="st"><div class="t cat-world">Event</div><div class="d">Pedestrian steps into the path</div><div class="pr">P(E | HB) = 0.5</div></div><span class="arr" aria-hidden="true">→</span>
+  <div class="st"><div class="t cat-world">Not avoided</div><div class="d">Pedestrian cannot step back</div><div class="pr">P(C̄ | E) = 0.5</div></div><span class="arr" aria-hidden="true">→</span>
+  <div class="st"><div class="t cat-world">Severity</div><div class="d">Collision injures</div><div class="pr">P(S | C̄) = 0.8</div></div><span class="arr" aria-hidden="true">→</span>
+  <div class="st"><div class="t cat-req">Harm</div><div class="d">Injured pedestrian</div><div class="pr">rate A<sub>H</sub></div></div>
+</div>
+<p class="eqsrc"><b>Source</b> ISO 21448:2022, 6.3 Hazard identification and 6.4 Risk evaluation <span class="nc">location not checked</span>; chain of Formulas (C.1)–(C.2), C.2.1, pp. 126–127, and Note 4 on consistency with the ISO 26262 HARA <span class="ck">checked</span>; P(S | C̄) from injury-risk curves over impact speed, e.g. Wang 2022, NHTSA DOT HS 813 219, Table 1-1 <span class="nc">location not checked</span>.</p>
+<div class="lit"><div class="lt">From the literature: full conditioning</div><p>Putze et al. (2023, Sec. IV-B(b)) point out that the correct chain is P(S | C̄, E, HB): a fast failure hurts more than a slow one. If the logical scenarios of step 07 differ in impact speed, give each its own chain. The workbook supports this; with one common chain it reduces exactly to the form used here.</p></div>
+
+<h2 id="s03"><span class="n">03</span>Acceptance criterion for the residual risk<span class="iso">Cl. 6.5</span></h2>
+<div class="who"><span><b>Who</b>Safety lead with the accident-data team, reviewed by the assessor</span><span><b>When</b>Concept phase, before any testing</span><span><b>Input</b>Human accident data for the harm class, matched to the ODD</span></div>
+<p>The harm class of the hazardous event decides which accident data the criterion is built on: pedestrian injuries for HE-1.1. Three decisions turn the human rate into the criterion.</p>
+<ol class="steps">
+<li><b>Human reference.</b> How often human drivers injure pedestrians per hour of driving in a matched ODD (road type, speed, time of day). Here a synthetic placeholder: 50 injuries in 10 million hours, h = 5.0·10⁻⁶ per hour. Replace it with GIDAS or national data matched to the ODD.</li>
+<li><b>Positive risk balance with margin.</b> Ten times better than humans for pedestrian injuries: 5.0·10⁻⁷ per hour for the whole harm class.</li>
+<li><b>Share for this hazardous event.</b> Other behaviours and events also injure pedestrians (unintended acceleration near crossings, turning conflicts, low-speed manoeuvres). HE-1.1 gets 20 % of the pedestrian budget. The shares of all hazardous events in a harm class must add up to at most 100 %.</li>
+</ol>
+<div class="mb">\req{A_H} = \text{share}\times\text{margin}\times\wld{h} = 0.2\times 0.1\times 5.0\cdot10^{-6} = \req{1.0\cdot 10^{-7}}\ \text{h}^{-1}</div>
+<p class="eqsrc"><b>Source</b> Acceptance criterion and positive risk balance: ISO 21448:2022, 3.1, p. 2, and 6.5, pp. 30–31 <span class="ck">checked</span>; budgets per incident type must add up: Warg et al. 2020, Sec. III-B <span class="nc">location not checked</span>; human rate, margin and share are inputs of this example <span class="oc">derived here</span>.</p>
+<aside class="plain"><span class="pl">In plain words</span>Human drivers in this kind of traffic injure a pedestrian about 5 times per million hours (placeholder). We want 10 times better: 5 per 10 million hours. This crossing situation gets one fifth of that, because other mistakes can hurt pedestrians too: 1 per 10 million hours.<span class="lk">On the map: <a href="validation-atlas.html#crit">Acceptance criterion</a></span></aside>
+<div class="lit"><div class="lt">From the literature: plausibility check</div><p>Kröger (2025) proposes about 4·10⁻⁸ fatalities or serious injuries per hour for automated vehicles. The pedestrian class budget here, 5·10⁻⁷ per hour for injuries of any severity, is 12.5 times that. It fits only if fewer than 1 in 12.5 of these injuries are serious or fatal, before other harm classes are counted. A full case sets one criterion per severity class (Werling et al. 2025).</p></div>
+<div class="assume"><strong>Assumption to defend</strong>The human reference must be matched to the ODD: road type, speed, time of day, region. An unmatched benchmark is the first thing an assessor will challenge.</div>
+
+<h2 id="s04"><span class="n">04</span>From harm rate to behaviour rate<span class="iso">Annex C.2.1</span></h2>
+<div class="who"><span><b>Who</b>Safety lead</span><span><b>When</b>Concept phase</span><span><b>Input</b>Field studies for each link of the chain</span></div>
+<p>The software only controls whether the behaviour happens. The rest of the chain is the world. Dividing by the chain gives how often the behaviour itself may occur:</p>
+<div class="mb">\req{R_{HB}} = \frac{\req{A_H}}{\wld{P(E\mid HB)}\;\wld{P(\bar C\mid E)}\;\wld{P(S\mid \bar C)}} = \frac{1.0\cdot 10^{-7}}{0.5\cdot 0.5\cdot 0.8} = \req{5.0\cdot 10^{-7}}\ \text{h}^{-1}</div>
+<p class="eqsrc"><b>Source</b> ISO 21448:2022, C.2.1, Formulas (C.1)–(C.2), pp. 126–127 <span class="ck">checked</span>; full conditioning: Putze et al. 2023, Sec. IV-B(b) <span class="ck">checked</span>.</p>
+<aside class="plain"><span class="pl">In plain words</span>Only 1 mistake in 5 leads to an injury (0.5 × 0.5 × 0.8 = 0.2). If injuries may happen once per 10 million hours, the mistake may happen five times as often: once per 2 million hours.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-chain">Chain rule</a> · <a href="validation-atlas.html#m-thin">Rates × chances</a></span></aside>
+<p>In words: in zebra-crossing situations the robotaxi may fail to yield at most once every two million hours of driving. Everything from here on is about showing that this holds.</p>
+
+<h2 id="s05"><span class="n">05</span>The naive validation target, and why it fails<span class="iso">Annex C.3</span></h2>
+<p>The simplest validation target: drive until you have seen zero hazardous behaviours for long enough. With confidence <span class="m">\cnf{C}=0.95</span>:</p>
+<div class="mb">\wld{\tau} = \frac{\ln\!\big(1/(1-\cnf{C})\big)}{\req{R_{HB}}} = \frac{\ln 20}{5.0\cdot10^{-7}} = \frac{3.0}{5.0\cdot10^{-7}} = 6.0\cdot 10^{6}\ \text{h}</div>
+<p class="eqsrc"><b>Source</b> ISO 21448:2022, C.3, Formula (C.7), p. 137 <span class="ck">checked</span>, taken from Littlewood &amp; Wright 1997 <span class="ck">checked</span>; the same calculation in Kalra &amp; Paddock 2016, Eq. 2, p. 3 <span class="ck">checked</span>.</p>
+<aside class="plain"><span class="pl">In plain words</span>If the car really made the mistake once per 2 million hours, then in 6 million hours you would expect 3 mistakes. Seeing none when 3 are expected happens only 5 % of the time. So 6 million mistake-free hours show, with 95 % confidence, that the rate is low enough.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-pois">Poisson process</a> · <a href="validation-atlas.html#m-zero">Zero-failure bound</a></span></aside>
+<p>A fleet of 100 robotaxis driving 20 hours a day collects 2,000 hours per day. Six million hours is 3,000 days, about <b>8.2 years</b>, and every software release changes the car. ISO 21448 itself notes that this target can be impractical (C.3, Note 1).</p>
+<div class="lit"><div class="lt">From the literature: no shortcut replaces the field entirely</div><p>Betschinske et al. (2025) review the routes to less field testing: decomposition, sequential tests, Bayesian priors, importance sampling, extreme-value analysis and scenario-based testing. Each reduces the effort; none fully removes the need for field data. This example uses decomposition, importance sampling and scenario-based testing, and keeps field driving for exposure and completeness.</p></div>
+
+<h2 id="s06"><span class="n">06</span>Functional insufficiencies, triggering conditions and modifications<span class="iso">Cl. 7–8</span></h2>
+<div class="who"><span><b>Who</b>Safety lead with perception and planning teams</span><span><b>When</b>Concept phase, revisited after every campaign</span><span><b>Work product</b>Triggering conditions and their evaluation (7.5); modifications (8.5)</span></div>
+<p>Clause 7 asks why the function could get it wrong. A triggering condition activates a functional insufficiency, which shows up at vehicle level as the hazardous behaviour.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>ID</th><th>Triggering condition</th><th>Functional insufficiency it activates</th><th>Applies to</th></tr></thead>
+<tbody>
+<tr><td>TC-1</td><td class="txt">Occlusion by a stationary vehicle (parked car, van, bus)</td><td class="txt">Pedestrian detected late</td><td class="txt">LS-2 (defines it)</td></tr>
+<tr><td>TC-2</td><td class="txt">Low light (dusk, night)</td><td class="txt">Lower detection range, missed dark clothing</td><td class="txt">all</td></tr>
+<tr><td>TC-3</td><td class="txt">Wet road, reflections</td><td class="txt">False or unstable detections</td><td class="txt">all</td></tr>
+<tr><td>TC-4</td><td class="txt">Small pedestrian (child)</td><td class="txt">Lower detection range, intent misjudged</td><td class="txt">all</td></tr>
+<tr><td>TC-5</td><td class="txt">Short time to arrival (≤ 1.5 s) at approach speed ≥ 40 km/h</td><td class="txt">Yield decision too late</td><td class="txt">LS-1, LS-2</td></tr>
+</tbody></table></div>
+<p>Clause 7.4 asks whether the system’s response to each triggering condition is acceptable; where it is not, Clause 8 changes the function. Here one functional restriction (8.3.3) is added: any unclassified object within 3 m of a crosswalk caps speed at 10 km/h. Step 09 uses it to bound the failure probability in situations nobody listed.</p>
+<p class="eqsrc"><b>Source</b> ISO 21448:2022, 7.3 Analysis of potential functional insufficiencies and triggering conditions, 7.4 Estimation of the acceptability of the system’s response, 8.3.3 Functional restrictions <span class="nc">location not checked</span>; triggering conditions per scenario area: 4.2.2, pp. 12–14 <span class="ck">checked</span>.</p>
+<div class="assume"><strong>Assumption to defend</strong>The list of triggering conditions is never complete. What is missing ends up in the reserve for unknown scenarios (step 09).</div>
+
+<h2 id="s07"><span class="n">07</span>Verification and validation strategy<span class="iso">Cl. 9</span></h2>
+<div class="who"><span><b>Who</b>Safety lead with the data, scenario and simulation teams; approved by the assessor</span><span><b>When</b>Pilot phase, frozen before confirmatory testing</span><span><b>Work product</b>V&amp;V strategy with validation targets (9.4)</span></div>
+<p>Clause 9 asks for a strategy that covers the relevant scenario space and sets validation targets. Because the naive target is impractical, the strategy splits the claim into parts that can each be shown. ISO 21448 allows several validation targets for one acceptance criterion (3.33, Note 3).</p>
+
+<h3>a · Logical scenarios derived from the hazardous event</h3>
+<p>The hazardous event says what to test. Logical scenarios say how: each is a scenario structure with parameter ranges (Menzel et al. 2018). The logical scenarios of a hazardous event must not overlap and must cover it completely, because each will hold its own share of the budget.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>ID</th><th>Logical scenario of HE-1.1</th><th>Parameters (ranges)</th></tr></thead>
+<tbody>
+<tr><td>LS-1</td><td class="txt">Pedestrian approaches the crossing in clear view</td><td class="txt">ego speed 20–50 km/h; pedestrian speed 0.8–2.5 m/s; time to arrival 0.5–5 s; light; road; pedestrian size</td></tr>
+<tr><td>LS-2</td><td class="txt">Pedestrian emerges from behind a stationary vehicle at the crossing</td><td class="txt">as LS-1, plus occluder type (car, van, bus) and lateral gap</td></tr>
+<tr><td>LS-3</td><td class="txt">Robotaxi turns into the street and meets a pedestrian on the crossing</td><td class="txt">turning speed 10–30 km/h; pedestrian position on the crossing; light; road; pedestrian size</td></tr>
+</tbody></table></div>
+<p>Light, road surface and pedestrian size are parameters inside each logical scenario, not separate scenarios. Triggering conditions are regions of this parameter space: they steer the targeted cases (step 08) and the importance sampling (step 09), but they do not hold their own budget.</p>
+<div class="mb">\wld{x}=(v_{\text{ego}},\,v_{\text{ped}},\,t_{\text{arr}},\,\text{light},\,\text{road},\,\text{size},\dots)\in\mathcal X_k</div>
+<p class="eqsrc"><b>Source</b> Functional, logical and concrete scenarios: Menzel et al. 2018 <span class="nc">location not checked</span>; coverage of the relevant scenario space: ISO 21448:2022, 9.1 a)–b), p. 42 <span class="ck">checked</span>; parameterisation changes results: de Gelder &amp; Op den Camp 2024 <span class="nc">location not checked</span>.</p>
+
+<h3>b · How often each logical scenario occurs</h3>
+<p>The behaviour rate splits into a world factor and a system factor per logical scenario:</p>
+<div class="mb">\req{R_{HB}} \;\ge\; R = \sum_k \wld{\lambda_k}\;\sys{p_k}</div>
+<p class="eqsrc"><b>Source</b> Putze et al. 2023, Sec. IV-B(b), Eq. (2) <span class="ck">checked</span>. Maths: <a href="validation-atlas.html#m-thin">thinning</a>, <a href="validation-atlas.html#m-total">total probability</a>.</p>
+<ul>
+<li><span class="m">\wld{\lambda_k}</span>: encounters with logical scenario <i>k</i> per hour of driving. Measured by counting on the road.</li>
+<li><span class="m">\sys{p_k}</span>: the chance that the robotaxi does not yield in one such encounter. Measured by testing.</li>
+</ul>
+<p>Encounters are common even though failures are rare, so a pilot of 1,000 fleet hours already pins the exposure down:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Logical scenario</th><th>Counted N<sub>k</sub> in 1,000 h</th><th>Point estimate /h</th><th>Upper bound λ<sub>k</sub><sup>U</sup> /h</th></tr></thead>
+<tbody>
+<tr><td class="txt">LS-1 · Clear view</td><td>4,000</td><td>4.0</td><td>4.16</td></tr>
+<tr><td class="txt">LS-2 · Emerging from behind a vehicle</td><td>500</td><td>0.50</td><td>0.559</td></tr>
+<tr><td class="txt">LS-3 · Turning onto the crossing</td><td>300</td><td>0.30</td><td>0.346</td></tr>
+</tbody></table></div>
+<div class="mb">\wld{\lambda_k^{U}} = \frac{\cnf{\chi^2_{C_b}}\big(2\wld{N_k}+2\big)}{2\,\wld{\tau}},\qquad \cnf{C_b}=1-\frac{1-\cnf{C}}{m}=99.375\,\%,\qquad \cnf{L}=\ln\frac{1}{1-\cnf{C_b}}=5.08</div>
+<p class="eqsrc"><b>Source</b> Poisson limits via χ²: Garwood 1936, Sec. 4, p. 441 <span class="ck">checked</span>, stated explicitly in Porter 2025, Sec. 5, Eq. 34 and Sec. 6.1, Eq. 38 <span class="ck">checked</span>; joint confidence 1 − (α₁ + α₂): ISO 21448:2022, C.6.3.2, Example 1, p. 156 <span class="ck">checked</span>; Bonferroni over paths: Putze et al. 2023, Sec. IV-B(b) <span class="ck">checked</span>. Maths: <a href="validation-atlas.html#m-chi">Poisson and χ²</a>, <a href="validation-atlas.html#m-union">union bound</a>.</p>
+<aside class="plain"><span class="pl">In plain words</span>The χ² expression is a number from a table; for 300 encounters in 1,000 hours it gives 0.346 per hour instead of the plain average 0.30, the cautious value from idea 5. The final check rests on eight claims at once (three exposure bounds, three failure bounds, one for unknown situations, one for the simulator), so each is made extra safe: wrong at most 1 time in 160. That turns the rule-of-three number 3 into about 5.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-chi">Poisson and χ²</a> · <a href="validation-atlas.html#m-union">Union bound</a></span></aside>
+
+<h3>c · Budget per logical scenario</h3>
+<p>The budget split decides how much risk each group of road users carries, and through that the validation targets. It is therefore set by a safety principle, not by test cost or test effort. A cost- or effort-optimal split would accept more risk exactly where testing is harder.</p>
+<ol class="steps">
+<li><b>Reserve for unknown scenarios.</b> Keep 10 % of the tolerable rate for situations nobody has listed (Clause 11): <span class="m">\req{b_{\text{unk}}}=5\cdot10^{-8}</span>, leaving <span class="m">\req{B}=4.5\cdot10^{-7}</span> per hour.</li>
+<li><b>Equal protection per encounter.</b> Every pedestrian at this zebra crossing gets the same protection, whichever logical scenario they are in. So every logical scenario gets the same allowed failure probability per encounter, and its budget share follows its exposure.</li>
+<li><b>Human baseline cap.</b> No logical scenario may end up worse than human drivers in that same scenario.</li>
+<li><b>Freeze.</b> Shares are fixed in the V&amp;V plan before the confirmatory campaign and may only move between campaigns, with fresh evidence (Werling et al. 2025, Remark 3.7).</li>
+</ol>
+<div class="mb">\req{b_k}=\req{B}\,\frac{\wld{\lambda_k^U}}{\sum_j\wld{\lambda_j^U}}\quad\Longrightarrow\quad \req{p^{*}}=\frac{\req{b_k}}{\wld{\lambda_k^U}}=\frac{\req{B}}{\sum_j\wld{\lambda_j^U}}=\frac{4.5\cdot10^{-7}}{5.065}=8.88\cdot10^{-8}\quad\text{for every }k</div>
+<p class="eqsrc"><b>Source</b> Linked scenario-class criteria add up to the hazard-based criterion, one validation target per scenario class, split to avoid concentrating residual risk: Hofmeister &amp; Kinalzyk (AVL), Sec. 2.2 <span class="nc">location not checked</span>; several validation targets for one criterion: ISO 21448:2022, 3.33, Note 3, p. 10 <span class="ck">checked</span>; reserve: 11.1, p. 50 <span class="ck">checked</span>; equal protection per encounter as the allocation rule <span class="oc">derived here</span>.</p>
+<aside class="plain"><span class="pl">In plain words</span>All crossings at this kind of zebra crossing happen about 5 times an hour together and may cause at most 4.5 mistakes per 10 million hours. Dividing one by the other: the robotaxi may fail in at most 1 of 11.3 million encounters, in every logical scenario alike. Clear-view crossings are the most frequent, so they get the biggest share of the budget (82 %), simply because they happen most often.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-thin">Rates × chances</a> · On the map: <a href="validation-atlas.html#alloc">Budget per logical scenario</a></span></aside>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Rule</th><th>Allowed p* LS-1 / LS-2 / LS-3</th><th>Protection ratio</th><th>Judgement</th></tr></thead>
+<tbody>
+<tr><td class="txt"><b>Equal protection (used)</b></td><td>1 in 11.3 M, all three</td><td>1.0</td><td class="txt">Every exposed pedestrian protected alike</td></tr>
+<tr><td class="txt">Proportional to human risk</td><td>1 in 18.5 M / 3.5 M / 5.1 M</td><td>5.2</td><td class="txt">Same improvement over humans everywhere, but keeps human weak spots</td></tr>
+<tr><td class="txt">Equal split</td><td>1 in 27.7 M / 3.7 M / 2.3 M</td><td>12.0</td><td class="txt">Arbitrary; a pedestrian on a turning crossing gets 12× less protection</td></tr>
+</tbody></table></div>
+<p>The protection ratio is the largest allowed failure probability per encounter divided by the smallest. If the harm chain differs between logical scenarios (for example lower impact speed when turning), equal protection equalises the harm probability per encounter instead; the workbook supports per-scenario chains.</p>
+
+<div class="calc" id="calc">
+  <div class="ct">Try it: budget per logical scenario</div>
+  <div class="ctl"><label for="rule">Allocation rule</label><select id="rule"><option value="eq">Equal protection per encounter</option><option value="hum">Proportional to human risk</option><option value="split">Equal split</option></select></div>
+  <div class="tbl-wrap" style="margin:0"><table>
+    <thead><tr><th>Logical scenario</th><th>λ<sup>U</sup> /h</th><th>Human share</th><th>w</th><th>Share of B</th><th>Allowed p*</th><th>1 in …</th><th>Runs n</th><th>Human cap</th></tr></thead>
+    <tbody id="calcBody"></tbody>
+  </table></div>
+  <p id="calcSum" style="font-size:15px;margin:.9rem 0 0"></p>
+</div>
+
+<h3>d · Validation targets</h3>
+<p>To show <span class="m">\sys{p_k}\le\req{p^*}</span> with zero failures, the number of simulation runs per logical scenario is:</p>
+<div class="mb">\tst{n_k} = \frac{\cnf{L}\,\tst{w_k}}{\req{p^{*}}}:\qquad 0.57\cdot10^{6},\ \ 2.86\cdot10^{6},\ \ 5.71\cdot10^{6}\ \text{runs}</div>
+<p class="eqsrc"><b>Source</b> Zero-failure logic: ISO 21448:2022, C.3, Formula (C.7), p. 137 <span class="ck">checked</span>; importance sampling over parameter distributions: C.5, pp. 146–151 <span class="ck">checked</span>, Owen 2013, Ch. 9 <span class="ck">checked</span>; using w<sub>k</sub> inside the zero-failure bound <span class="oc">derived here</span>. Maths: <a href="validation-atlas.html#m-zero">zero-failure bound</a>, <a href="validation-atlas.html#m-is">change of measure</a>.</p>
+<aside class="plain"><span class="pl">In plain words</span>To show the car fails in at most 1 of 11.3 million turning encounters, you need about 5.08 × 11.3 million ≈ 57 million encounters without a failure. Testing the dangerous turning variants ten times more often than they occur (w = 0.1) makes each run count like 10 encounters: 5.7 million runs.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-binom">Bernoulli trials</a> · <a href="validation-atlas.html#m-is">Change of measure</a></span></aside>
+<p>The importance factor w<sub>k</sub> comes from a pilot simulation campaign: it is the largest weight p(x)/q(x) wherever the robotaxi can fail. Clear-view scenes are well understood (w = 0.01), occlusion less so (0.05), turning least (0.10). Turning needs the most runs because it is least efficient to test, not because it is allowed more risk.</p>
+<p>The validation targets of the frozen plan, the work product of Clause 9:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Target</th><th>Value</th><th>Shows</th></tr></thead>
+<tbody>
+<tr><td class="txt">Targeted cases per logical scenario</td><td>48 / 144 / 48, all pass</td><td class="txt">Known hazardous scenarios handled (Cl. 10)</td></tr>
+<tr><td class="txt">Sampled simulation runs, zero failures</td><td>0.57 M / 2.86 M / 5.71 M</td><td class="txt">p<sub>k</sub> ≤ 1 in 11.3 M (Cl. 11)</td></tr>
+<tr><td class="txt">Confirmatory fleet driving</td><td>20,000 h</td><td class="txt">Exposure λ<sub>k</sub>, discovery of new scenarios</td></tr>
+<tr><td class="txt">Paired simulation / proving-ground runs</td><td>180, near the failure boundary</td><td class="txt">Simulator margin δ = 1.17 m</td></tr>
+</tbody></table></div>
+<div class="lit"><div class="lt">From the literature: independent evidence units</div><p>Patel &amp; Jung (2026, Sec. 3.5) stress that evidence counts only in independent units: one run is one independent concrete scenario, never a frame or slice of the same scene. And a performance shown under one triggering condition counts for another only after testing under it.</p></div>
+
+<h3>e · Can the simulator be trusted?</h3>
+<p>The same scenario runs on the proving ground with a pedestrian dummy and in simulation. The safety metric <span class="m">\tst{y}</span> is the distance between robotaxi and pedestrian when the pedestrian reaches the conflict zone; the difference is the simulator error.</p>
+<div class="mb">\tst{e} = \tst{y_{\text{sim}}} - \wld{y_{\text{real}}},\qquad \text{pass}\iff \tst{y_{\text{sim}}}\ge\req{y_{\text{crit}}}+\tst{\delta},\qquad \tst{\delta}=\hat\mu+\cnf{z}\,\tst{\sigma^U}=0.05+6.5\cdot0.173=1.17\ \text{m}</div>
+<p class="eqsrc"><b>Source</b> Simulation accuracy is part of the safety argument: ISO 21448:2022, C.1, p. 125 <span class="ck">checked</span>; upper bound on σ via χ²: Casella &amp; Berger 2002, Thm 5.3.1 <span class="nc">location not checked</span>; the margin rule <span class="oc">derived here</span>. Maths: <a href="validation-atlas.html#m-norm">normal tails</a>.</p>
+<aside class="plain"><span class="pl">In plain words</span>The simulator is usually off by about 0.15 m. Requiring a 1.17 m gap means the simulator would have to be wrong by 6.5 times its typical error before a real collision could hide behind a simulated pass. Under the usual bell curve that happens 4 times in 100 billion, which is 0.05 % of the allowed failure probability.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-norm">Normal tails</a></span></aside>
+<div class="assume"><strong>Assumption to defend</strong>Nobody can measure a Gaussian tail at 6.5σ with 180 pairs. Place pairs near the failure boundary, check the error does not grow there, and do it for each triggering condition.</div>
+
+<h2 id="s08"><span class="n">08</span>Evaluation of known scenarios<span class="iso">Cl. 10</span></h2>
+<div class="who"><span><b>Who</b>Simulation and proving-ground teams</span><span><b>When</b>Before every release</span><span><b>Work product</b>Verification results (10.8)</span></div>
+<p>Known hazardous scenarios are verified by infusing the triggering conditions on purpose, alone and combined, and requiring every case to pass with the simulator margin:</p>
+<ul>
+<li>LS-1 and LS-3: light (day, dusk, night) × road (dry, wet) × pedestrian (adult, child) × 4 approach speeds = 48 cases each.</li>
+<li>LS-2: the same × 3 occluders (car, van, bus) = 144 cases.</li>
+</ul>
+<div class="mb">\text{pass} \iff \tst{y_{\text{sim}}}(\wld{x}_j)\ \ge\ \req{y_{\text{crit}}}+\tst{\delta}\quad\text{for all } j=1,\dots,240</div>
+<p class="eqsrc"><b>Source</b> Evaluation of the residual risk due to known hazardous scenarios: ISO 21448:2022, 10.7, pp. 49–50 <span class="ck">checked</span>; sensing, planning, actuation and integrated verification: 10.3–10.6 <span class="nc">location not checked</span>; the 240-case matrix <span class="oc">derived here</span>.</p>
+<aside class="plain"><span class="pl">In plain words</span>Deliberately turn on every known difficulty, alone and in combination, and require the car to pass every single case. These are targeted pass/fail checks. They show the car copes with each known weak spot, but they cannot say how often it fails, because the cases were chosen, not drawn at random.<span class="lk">On the map: <a href="validation-atlas.html#sc-tc">Triggering-condition infusion</a></span></aside>
+<p>All 240 cases pass. The work product records each case, its parameters and its clearance.</p>
+
+<h2 id="s09"><span class="n">09</span>Evaluation of unknown scenarios<span class="iso">Cl. 11</span></h2>
+<div class="who"><span><b>Who</b>Simulation and data teams</span><span><b>When</b>Confirmatory campaign, on the frozen release</span><span><b>Work product</b>Validation results and residual-risk evaluation (11.4)</span></div>
+<p>Clause 11 asks for the residual risk due to scenarios nobody has listed. Three kinds of evidence answer it.</p>
+<h3>a · Scenario exploration: where does it nearly fail?</h3>
+<p>An optimiser or adaptive sampler searches each logical scenario for the smallest clearance and maps the failure boundary. In the pilot it found the closest calls at night, at 40 km/h and more, with pedestrians reaching the conflict zone within 1.5 s; wet roads made it worse, which added TC-3 to the list. Exploration turns unknown hazardous scenarios into known ones, and it builds the test density q used for importance sampling. It is not a risk estimate: it over-samples danger on purpose.</p>
+<div class="mb">\wld{x}^{*}=\arg\min_{\wld{x}\in\mathcal X_k}\ \tst{y_{\text{sim}}}(\wld{x}),\qquad \partial F_k=\{\wld{x}:\ \tst{y_{\text{sim}}}(\wld{x})=\req{y_{\text{crit}}}+\tst{\delta}\}</div>
+<p class="eqsrc"><b>Source</b> Iterative V&amp;V turns area 3 into area 2: ISO 21448:2022, C.3, Fig. C.4, p. 135 <span class="ck">checked</span>; scenario exploration and random scenario simulation: 11.3, Table 11, p. 51 <span class="ck">checked</span>; search methods: Zhao et al. 2017 <span class="ck">checked</span>, Feng et al. 2023 <span class="ck">checked</span>, Moss et al. 2023 <span class="ck">checked</span>.</p>
+<h3>b · Random scenario simulation: how often does it fail?</h3>
+<p>Concrete scenarios are drawn from q, weighted by p/q, and run on the frozen release: 9.1 million runs, zero failures. The bound on the failure probability per encounter, including the simulator miss term:</p>
+<div class="mb">\sys{p_k^U} = \frac{\cnf{L}\,\tst{w_k}}{\tst{n_k}} + \cnf{\Phi}(-\cnf{z}) = 8.88\cdot10^{-8}\quad\text{in every logical scenario}</div>
+<p class="eqsrc"><b>Source</b> Importance-sampling estimate: Owen 2013, Ch. 9 <span class="ck">checked</span>; ISO 21448:2022, C.5, pp. 149–151 <span class="ck">checked</span>; zero-failure logic: C.3, p. 137 <span class="ck">checked</span>; adding Φ(−z) as a miss term <span class="oc">derived here</span>. Maths: <a href="validation-atlas.html#m-binom">Bernoulli trials</a>, <a href="validation-atlas.html#m-is">change of measure</a>.</p>
+<h3>c · Field driving: exposure and discovery</h3>
+<p>20,000 confirmatory fleet hours on the same release give fresh, tighter exposure bounds: 4.04, 0.513 and 0.310 per hour. They also feed the discovery log: no new kind of situation appeared, which bounds how often unlisted situations occur.</p>
+<div class="mb">\wld{\lambda_{\text{new}}^U}=\frac{\cnf{L}}{\wld{\tau}}=\frac{5.08}{20\,000}=2.5\cdot10^{-4}\ \text{h}^{-1},\qquad \wld{\lambda_{\text{new}}^U}\cdot\sys{p_{\text{new}}}=2.5\cdot10^{-8}\le\req{b_{\text{unk}}}=5\cdot10^{-8}</div>
+<p class="eqsrc"><b>Source</b> Residual risk of unknown scenarios: ISO 21448:2022, 11.1, p. 50, and 11.3 Note 1, p. 52 <span class="ck">checked</span>; missing mass: Good 1953 <span class="nc">location not checked</span>, Berend &amp; Kontorovich 2013, Theorem 1 <span class="ck">checked</span>; p<sub>new</sub> ≤ 10⁻⁴ argued from the functional restriction of step 06 <span class="oc">derived here</span>. Maths: <a href="validation-atlas.html#m-zero">zero-failure bound</a>, <a href="validation-atlas.html#m-gt">Good–Turing</a>.</p>
+<aside class="plain"><span class="pl">In plain words</span>If 20,000 hours brought nothing new, new kinds of situation must be rare: at most about once in 4,000 hours. The car cannot be tested in situations nobody has thought of, so the design rule of step 06 (slow to 10 km/h near anything unclassified at a crosswalk) argues that it fails in at most 1 of 10,000 of them. That uses half the reserve.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-gt">Good–Turing</a></span></aside>
+
+<h2 id="s10"><span class="n">10</span>Evaluation of the achievement of the SOTIF<span class="iso">Cl. 12</span></h2>
+<div class="who"><span><b>Who</b>Safety lead, reviewed by the assessor</span><span><b>When</b>Before release</span><span><b>Work product</b>SOTIF evaluation and release recommendation (12.5)</span></div>
+<p>All terms are computed from the confirmatory data and added up. The criterion is shown if the sum of upper bounds stays under the tolerable rate, every known scenario passed, and no term exceeds its human cap.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Term</th><th>Exposure bound /h</th><th>Failure bound</th><th>Product /h</th><th>Of its budget</th></tr></thead>
+<tbody>
+<tr><td class="txt">LS-1 · Clear view</td><td>4.04</td><td>8.88·10⁻⁸</td><td>3.59·10⁻⁷</td><td>97 %</td></tr>
+<tr><td class="txt">LS-2 · Emerging from behind a vehicle</td><td>0.513</td><td>8.88·10⁻⁸</td><td>0.46·10⁻⁷</td><td>92 %</td></tr>
+<tr><td class="txt">LS-3 · Turning onto the crossing</td><td>0.310</td><td>8.88·10⁻⁸</td><td>0.28·10⁻⁷</td><td>90 %</td></tr>
+<tr><td class="txt">Unknown scenarios</td><td>2.5·10⁻⁴</td><td>1.0·10⁻⁴ (argued)</td><td>0.25·10⁻⁷</td><td>51 %</td></tr>
+<tr class="total"><td class="txt">Sum</td><td></td><td></td><td>4.57·10⁻⁷</td><td>91 % of R<sub>HB</sub></td></tr>
+</tbody></table></div>
+<div class="mb">\sum_k \wld{\lambda_k^U}\,\sys{p_k^U} + \wld{\lambda_{\text{new}}^U}\,\sys{p_{\text{new}}} = 4.57\cdot 10^{-7} \;\le\; \req{R_{HB}} = 5.0\cdot 10^{-7}</div>
+<p class="eqsrc"><b>Source</b> Sum of upper bounds: Putze et al. 2023, Sec. IV-B(b), Eq. (2) <span class="ck">checked</span>; methods and criteria for evaluating the SOTIF: ISO 21448:2022, 12.3 c), p. 54 <span class="ck">checked</span>; recommendation for release: 12.4 <span class="nc">location not checked</span>. Maths: <a href="validation-atlas.html#m-union">union bound</a>.</p>
+<aside class="plain"><span class="pl">In plain words</span>Add the worst plausible rate from each logical scenario plus the allowance for unknown situations: 3.59 + 0.46 + 0.28 + 0.25 = 4.57 per 10 million hours. The limit is 5. The goal is shown with 9 % to spare, all 240 targeted cases passed, so release is recommended for this hazardous event.<span class="lk">On the map: <a href="validation-atlas.html#stop">Stop rule and verdict</a></span></aside>
+<div class="verdict"><div class="vt p">Release recommended for HE-1.1, at 95 % joint confidence</div>The robotaxi’s rate of not yielding in zebra-crossing situations is below 5·10⁻⁷ per hour, so its contribution to pedestrian injuries is below 1·10⁻⁷ per hour, provided the assumptions in the ochre boxes hold. HB-1 as a whole still needs the same argument for HE-1.2 to HE-1.4.</div>
+<h3>What if one run had failed?</h3>
+<p>One failure in LS-1 multiplies its bound by 1.41: the LS-1 term becomes 5.07·10⁻⁷ and the sum 6.06·10⁻⁷. One failure in LS-2 or LS-3 would still pass (4.76·10⁻⁷ and 4.69·10⁻⁷); they fail at 3 and 5 failures. The most frequent scenario is the most sensitive, because its allowed failure probability is spread over the most encounters.</p>
+<div class="verdict bad"><div class="vt f">With one LS-1 failure: criterion not shown</div>Running extra simulations until the bound fits again is not allowed: the stopping rule would then depend on the result. Analyse the failure, add its cause to the triggering conditions (Clause 7), fix the function (Clause 8), and run a new frozen campaign on the new release.</div>
+
+<h2 id="s11"><span class="n">11</span>Operation phase<span class="iso">Cl. 13</span></h2>
+<div class="who"><span><b>Who</b>Field monitoring team, safety lead</span><span><b>When</b>After release, continuously</span><span><b>Work product</b>Field monitoring plan (13.5)</span></div>
+<p>After release the fleet keeps counting. At the limit, 730,000 fleet hours a year would show on average 0.365 events of HB-1 in zebra-crossing situations. Two rules decide when that count shows the criterion is violated and triggers the SOTIF issue process (13.4):</p>
+<ul>
+<li><b>Fixed one-year rule:</b> 3 or more events in one year show a violation at 95 % confidence. It is valid only for one look at the end of the year.</li>
+<li><b>Anytime-valid rule:</b> a likelihood-ratio e-process against twice the limit raises the alarm at 5 events within the first year, 6 within two, 7 within five. It stays valid however often it is checked.</li>
+</ul>
+<div class="mb">E(t)=\Big(\frac{\lambda_1}{\req{R_{HB}}}\Big)^{k(t)}\,e^{-(\lambda_1-\req{R_{HB}})\,t},\qquad \lambda_1=2\,\req{R_{HB}},\qquad \text{alarm when } E(t)\ge\frac{1}{1-\cnf{C}}=20</div>
+<p class="eqsrc"><b>Source</b> Field monitoring and topics for observation: ISO 21448:2022, 13.1, p. 55, and 13.3, pp. 56–57 <span class="ck">checked</span>; issue evaluation and resolution: 13.4 <span class="nc">location not checked</span>; anytime-valid inference: Ramdas, Grünwald, Vovk &amp; Shafer 2023 <span class="ck">checked</span>; sequential probability ratio test: Wald 1945 <span class="nc">location not checked</span>; the monitoring thresholds <span class="oc">derived here</span>.</p>
+<aside class="plain"><span class="pl">In plain words</span>Field data cannot prove the car safe enough: a whole year without any event only shows the rate is below 8 times the limit. But it can show the car is not safe enough. Five events within the first year would be very unlikely if the car met its goal, so they raise the alarm. Any field event that matches no listed triggering condition also counts against the reserve and starts the issue process.<span class="lk">Maths behind it: <a href="validation-atlas.html#m-eproc">Anytime-valid monitoring</a></span></aside>
+
+<h2 id="s12"><span class="n">12</span>Who does what, and when</h2>
+<p>Read the table across for one team’s work, and down for one phase. The coloured lines are what each cell hands on to the next.</p>
+<div class="lane-wrap"><div class="lanes" role="table" aria-label="Roles by phase">
+  <div class="ph"></div>
+  <div class="ph">1 · Concept<small>Cl. 5–7</small></div>
+  <div class="ph">2 · Pilot<small>Cl. 7–9</small></div>
+  <div class="ph">3 · Plan and freeze<small>Cl. 9</small></div>
+  <div class="ph">4 · Confirmatory<small>Cl. 10–11</small></div>
+  <div class="ph">5 · Release<small>Cl. 12</small></div>
+  <div class="ph">6 · Operation<small>Cl. 13</small></div>
+
+  <div class="role" style="--rc:var(--c-req)">Safety lead</div>
+  <div style="--rc:var(--c-req)">Specification, HARA, acceptance criterion per behaviour and harm class.<span class="out">A_H, R_HB</span></div>
+  <div style="--rc:var(--c-req)">Triggering conditions, functional restriction, logical scenarios.<span class="out">TC list, LS-1…3</span></div>
+  <div style="--rc:var(--c-req)">Reserve, budget per logical scenario, Bonferroni, V&amp;V plan.<span class="out">p*, validation targets</span></div>
+  <div class="empty">Hands off. No changes to plan or software.</div>
+  <div style="--rc:var(--c-req)">Sum of bounds, release recommendation.<span class="out">recommended</span></div>
+  <div style="--rc:var(--c-req)">Issue process on alarms; re-run after any ODD or software change.</div>
+
+  <div class="role" style="--rc:var(--c-world)">Data and ODD</div>
+  <div style="--rc:var(--c-world)">Human accident data matched to the ODD; chain probabilities.<span class="out">h, P(E), P(C̄), P(S)</span></div>
+  <div style="--rc:var(--c-world)">1,000 h pilot driving; counts and parameter distributions.<span class="out">λ_kᵁ, p_k(x)</span></div>
+  <div class="empty">—</div>
+  <div style="--rc:var(--c-world)">20,000 h on the frozen release; discovery log.<span class="out">λ_kᵁ, λ_newᵁ</span></div>
+  <div style="--rc:var(--c-world)">Exposure bounds and discovery curve.</div>
+  <div style="--rc:var(--c-world)">Field counts, near misses, new situations.<span class="out">e-process</span></div>
+
+  <div class="role" style="--rc:var(--c-test)">Scenario and simulation</div>
+  <div class="empty">—</div>
+  <div style="--rc:var(--c-test)">Scenario exploration; failure boundary; test densities.<span class="out">w_k, q</span></div>
+  <div style="--rc:var(--c-test)">Targeted case matrix and run counts in the plan.<span class="out">240 cases, n_k</span></div>
+  <div style="--rc:var(--c-test)">240 targeted cases; 9.1 M weighted runs.<span class="out">j_k failures</span></div>
+  <div style="--rc:var(--c-test)">Verification results and failure bounds.<span class="out">p_kᵁ</span></div>
+  <div style="--rc:var(--c-test)">Replay every field near miss in simulation.</div>
+
+  <div class="role" style="--rc:var(--c-sys)">Proving ground</div>
+  <div class="empty">—</div>
+  <div style="--rc:var(--c-sys)">Pedestrian-dummy set-ups for all three logical scenarios.</div>
+  <div style="--rc:var(--c-sys)">180 paired runs near the failure boundary.<span class="out">δ = 1.17 m</span></div>
+  <div class="empty">—</div>
+  <div class="empty">—</div>
+  <div style="--rc:var(--c-sys)">Repeat pairs when sensors or models change.</div>
+
+  <div class="role" style="--rc:var(--c-conf)">Assessor</div>
+  <div style="--rc:var(--c-conf)">Review benchmark, shares and HARA.</div>
+  <div class="empty">—</div>
+  <div style="--rc:var(--c-conf)">Approve the frozen plan before any confirmatory data.</div>
+  <div class="empty">—</div>
+  <div style="--rc:var(--c-conf)">Review the evaluation and every assumption box.</div>
+  <div class="empty">—</div>
+</div></div>
+
+<h2 id="s13"><span class="n">13</span>What an assessor will press on</h2>
+<ol class="steps">
+<li><b>Hazard identification.</b> Is the list of hazardous behaviours complete at vehicle level, and does each have hazardous events for every harm class it can cause?</li>
+<li><b>The benchmark and shares.</b> Is the human reference matched to the ODD, and do the shares of all hazardous events in a harm class add up to at most 100 %? Is there one criterion per severity class?</li>
+<li><b>The chain.</b> Are P(E | HB), P(C̄ | E) and P(S | C̄) the same in every logical scenario? If not, use per-scenario chains (Putze et al. 2023).</li>
+<li><b>Logical scenarios.</b> Do they cover HE-1.1 completely without overlap? Is the discovery curve flat enough to justify the reserve?</li>
+<li><b>Budget principle.</b> Why this split? Equal protection per encounter is defensible to the public; a split driven by test cost or effort is not.</li>
+<li><b>The simulator.</b> Does the error model hold out at 6.5σ, for every triggering condition?</li>
+<li><b>Independence and freezing.</b> Are runs independent concrete scenarios? Was the plan frozen before the confirmatory data, and all evidence collected on one release?</li>
+</ol>
+
+<h3>Glossary</h3>
+<dl class="gloss">
+<dt>ODD (operational design domain)</dt><dd>The roads, speeds, times and weather the robotaxi is allowed to drive in.</dd>
+<dt>Hazardous behaviour</dt><dd>What the vehicle does wrong, described without a situation: does not yield, unintended braking, acceleration or steering, loss of braking, steering or propulsion.</dd>
+<dt>Operational situation</dt><dd>The setting the vehicle is in, such as approaching a zebra crossing with a pedestrian about to cross.</dd>
+<dt>Hazardous event</dt><dd>A hazardous behaviour in an operational situation where someone is exposed.</dd>
+<dt>Acceptance criterion</dt><dd>The safety goal as a number: how often harm may occur at most.</dd>
+<dt>Functional insufficiency</dt><dd>A weakness of the intended function, such as late detection.</dd>
+<dt>Triggering condition</dt><dd>A circumstance that activates a functional insufficiency: darkness, occlusion, rain.</dd>
+<dt>Logical scenario</dt><dd>A scenario structure with parameter ranges, derived from a hazardous event; it holds one share of the budget and gets one validation target.</dd>
+<dt>Concrete scenario</dt><dd>A logical scenario with one value for every parameter: one test case.</dd>
+<dt>Validation target</dt><dd>How much evidence is needed to show the criterion, such as “5.7 million turning runs with no failure”.</dd>
+<dt>Exposure</dt><dd>How often a logical scenario occurs per hour of driving.</dd>
+<dt>Upper bound</dt><dd>The most pessimistic value that still fits the data.</dd>
+<dt>Bonferroni</dt><dd>Making each of several claims extra safe so that all of them together are still right 95 % of the time.</dd>
+<dt>Importance factor</dt><dd>How much one simulation run counts compared with one real encounter, set by how much the test density over-samples dangerous variants.</dd>
+<dt>Protection ratio</dt><dd>The largest allowed failure probability per encounter divided by the smallest; 1 means every encounter is protected alike.</dd>
+<dt>Proving ground</dt><dd>A closed test track, here with a pedestrian dummy.</dd>
+<dt>Frozen plan</dt><dd>The V&amp;V plan fixed and approved before the confirmatory tests start.</dd>
+<dt>Assessor</dt><dd>An independent expert, for example from TÜV, who checks the argument.</dd>
+</dl>
+
+<h3>Calculations</h3>
+<p>Every number on this page is computed in the course workbook <a href="../tools/sotif_validation_workbook.py"><code>course/tools/sotif_validation_workbook.py</code></a>. It follows the same ISO 21448 clauses, runs on the synthetic inputs in <code>mock_inputs_robotaxi.json</code>, and its self-test reproduces this page’s values. Replace the inputs with your own data and rerun.</p>
+
+<h3>Sources</h3>
+<ul class="sources">
+<li>ISO 21448:2022(E), Road vehicles — Safety of the intended functionality: 3.1, 3.33; 4.2.2; Clauses 5–13; Annex C.1, C.2.1, C.3, C.5, C.6.3.2.</li>
+<li>Putze, Westhofen, Koopmann, Böde, Neurohr (2023), <a href="https://arxiv.org/abs/2304.10170">On Quantification for SOTIF Validation of Automated Driving Systems</a>, Sec. IV-B.</li>
+<li>Betschinske et al. (2025), <a href="https://arxiv.org/abs/2506.10363">Towards more efficient quantitative safety validation of residual risk</a>.</li>
+<li>Warg, F. et al. (2020), <a href="https://www.es.mdh.se/pdf_publications/5963.pdf">The Quantitative Risk Norm</a>, Sec. III-B.</li>
+<li>Werling, Faller, Betz, Straub (2025), <a href="https://arxiv.org/abs/2503.20544">Safety integrity framework for automated driving</a>, Sec. 3.3, Remark 3.7.</li>
+<li>Hofmeister, Kinalzyk (AVL), <i>Acceptance Criteria, Validation Targets and Performance Targets in an ISO 21448 conform development process</i>, Sec. 2.2.</li>
+<li>Kröger (2025), <a href="https://www.sciencedirect.com/science/article/abs/pii/S3050475925001095">How safe should automated vehicles be?</a>, Next Research 2:100238.</li>
+<li>Patel, Jung (2026), <a href="https://arxiv.org/abs/2610.35092">arXiv:2610.35092</a>, Sec. 3.5.</li>
+<li>Menzel, Bagschik, Maurer (2018), Scenarios for development, test and validation of automated vehicles, IEEE IV; de Gelder, Op den Camp (2024), <a href="https://arxiv.org/abs/2409.01117">How (not) to parameterize scenarios</a>.</li>
+<li>Littlewood, Wright (1997), <a href="https://openaccess.city.ac.uk/id/eprint/1614/">Some conservative stopping rules for the operational testing of safety-critical software</a>; Kalra, Paddock (2016), <a href="https://www.rand.org/pubs/research_reports/RR1478.html">Driving to Safety</a>.</li>
+<li>Garwood (1936), <a href="https://jhanley.biostat.mcgill.ca/bios601/Intensity-Rate/Garwood1936.pdf">Fiducial limits for the Poisson distribution</a>, Biometrika 28:437–442, Sec. 4; Porter (2025), <a href="https://arxiv.org/abs/2509.02852">Confidence intervals for the Poisson distribution</a>, Sec. 5–6; Casella, Berger (2002), <i>Statistical Inference</i>, Thm 5.3.1.</li>
+<li>Owen (2013), <a href="https://artowen.su.domains/mc/">Monte Carlo theory, methods and examples</a>, Ch. 9; Zhao et al. (2017), <a href="https://arxiv.org/abs/1605.04965">arXiv:1605.04965</a>; Feng et al. (2023), <a href="https://doi.org/10.1038/s41586-023-05732-2">Nature 615:620–627</a>; Moss et al. (2023), <a href="https://arxiv.org/abs/2305.02449">arXiv:2305.02449</a>.</li>
+<li>Good (1953), Biometrika 40:237–264; Berend, Kontorovich (2013), <a href="https://arxiv.org/abs/1210.3248">On the concentration of the missing mass</a>, Theorem 1.</li>
+<li>Ramdas, Grünwald, Vovk, Shafer (2023), <a href="https://arxiv.org/abs/2210.01948">Game-theoretic statistics and safe anytime-valid inference</a>; Wald (1945), Sequential tests of statistical hypotheses.</li>
+<li>Wang (2022), <a href="https://crashstats.nhtsa.dot.gov/Api/Public/Publication/813219">MAIS injury probability curves as functions of delta V</a>, NHTSA DOT HS 813 219.</li>
+</ul>
+</div>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const CATKEY={"#000001":"req","#000002":"world","#000003":"sys","#000004":"test","#000005":"conf"};
+const MACROS={"\\req":"\\textcolor{000001}{#1}","\\wld":"\\textcolor{000002}{#1}","\\sys":"\\textcolor{000003}{#1}","\\tst":"\\textcolor{000004}{#1}","\\cnf":"\\textcolor{000005}{#1}"};
+function render(el,display){
+  const src=el.textContent;
+  if(!window.katex)return;
+  const html=katex.renderToString(src,{output:"mathml",displayMode:display,throwOnError:false,strict:false,macros:{...MACROS}});
+  el.innerHTML=html;
+  el.querySelectorAll("[mathcolor]").forEach(m=>{const c=CATKEY[m.getAttribute("mathcolor").toLowerCase()];if(c){m.removeAttribute("mathcolor");m.setAttribute("class","cat-"+c);}});
+}
+document.querySelectorAll(".mb").forEach(e=>render(e,true));
+document.querySelectorAll(".m").forEach(e=>render(e,false));
+function scrollToHash(){const id=location.hash.slice(1);const t=id&&document.getElementById(id);if(t)t.scrollIntoView();}
+addEventListener("hashchange",scrollToHash);
+
+/* Budget per logical scenario: safety rules only, no cost. Same rules as the course workbook. */
+const B=4.5e-7,L=Math.log(160);
+const LS=[
+ {nm:"LS-1 · Clear view",lu:4.16,hs:0.50,w:0.01,cap:2.5e-6},
+ {nm:"LS-2 · Emerging from behind a vehicle",lu:0.559,hs:0.35,w:0.05,cap:1.75e-6},
+ {nm:"LS-3 · Turning onto the crossing",lu:0.346,hs:0.15,w:0.10,cap:7.5e-7}
+];
+const SUP={"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+function sci(v,d=2){if(!isFinite(v))return"∞";if(v===0)return"0";const e=Math.floor(Math.log10(Math.abs(v)));if(e>=-2&&e<=4)return(+v.toPrecision(3)).toLocaleString("en-US");return (v/Math.pow(10,e)).toFixed(d)+"·10"+String(e).split("").map(c=>SUP[c]).join("");}
+function big(v){return v>=1e6?(v/1e6).toFixed(v>=1e7?0:1)+" M":Math.round(v).toLocaleString("en-US");}
+const body=document.getElementById("calcBody");
+body.innerHTML=LS.map((t,i)=>`<tr><td class="txt">${t.nm}</td>
+ <td><input type="number" id="lu${i}" step="any" min="0.0001" value="${t.lu}" aria-label="Exposure bound for ${t.nm}"></td>
+ <td><input type="number" id="hs${i}" step="any" min="0" max="1" value="${t.hs}" aria-label="Human share for ${t.nm}"></td>
+ <td><input type="number" id="w${i}" step="any" min="0.0001" max="1" value="${t.w}" aria-label="Importance factor for ${t.nm}"></td>
+ <td id="s${i}"></td><td id="p${i}"></td><td id="o${i}"></td><td id="n${i}"></td><td id="h${i}"></td></tr>`).join("");
+function weights(rule,ts){
+  if(rule==="eq")return ts.map(t=>t.lu);
+  if(rule==="hum")return ts.map(t=>t.hs);
+  return ts.map(()=>1);
+}
+function allocate(rule,ts){
+  /* rule weights, then clamp any share above its human cap and redistribute the rest by the same weights */
+  const wt=weights(rule,ts);let free=ts.map((_,i)=>i),fixed={},budget=B;
+  for(let it=0;it<10;it++){
+    const S=free.reduce((a,i)=>a+wt[i],0);const tmp={};free.forEach(i=>tmp[i]=S>0?budget*wt[i]/S:0);
+    let changed=false;for(const i of free){if(tmp[i]>ts[i].cap){fixed[i]=ts[i].cap;budget-=ts[i].cap;changed=true;}}
+    free=free.filter(i=>!(i in fixed));
+    if(!changed)return ts.map((_,i)=>i in fixed?fixed[i]:tmp[i]);
+  }
+  return ts.map((_,i)=>fixed[i]??0);
+}
+function calc(){
+  const rule=document.getElementById("rule").value;
+  const ts=LS.map((t,i)=>({...t,lu:Math.max(1e-9,+document.getElementById("lu"+i).value||0),hs:Math.max(0,+document.getElementById("hs"+i).value||0),w:Math.min(1,Math.max(1e-6,+document.getElementById("w"+i).value||0))}));
+  const b=allocate(rule,ts);let runs=0;const ps=[];
+  ts.forEach((t,i)=>{const p=b[i]/t.lu,n=L*t.w/p;runs+=n;ps.push(p);
+    document.getElementById("s"+i).textContent=(b[i]/B*100).toFixed(1)+" %";
+    document.getElementById("p"+i).textContent=sci(p);
+    document.getElementById("o"+i).textContent=big(1/p);
+    document.getElementById("n"+i).textContent=big(n);
+    const capped=Math.abs(b[i]-t.cap)<1e-15;
+    document.getElementById("h"+i).innerHTML=capped?`<span class="fail">binds</span>`:`<span class="pass">ok</span>`;});
+  const ratio=Math.max(...ps)/Math.min(...ps);
+  const hsum=ts.reduce((a,t)=>a+t.hs,0);
+  document.getElementById("calcSum").innerHTML=`Protection ratio <b>${ratio.toFixed(1)}</b> (1.0 means every encounter is protected alike). Total sampled runs <b>${big(runs)}</b>.`+(rule==="hum"&&Math.abs(hsum-1)>0.001?` <span class="fail">Human shares add up to ${hsum.toFixed(2)}, not 1.</span>`:"");
+}
+document.getElementById("calc").addEventListener("input",calc);
+document.getElementById("rule").addEventListener("change",calc);
+calc();
+scrollToHash();
+</script>
+
+</body></html>

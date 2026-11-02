@@ -1,0 +1,1441 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"></head><body>
+<title>SOTIF Validation Atlas</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Sans+Condensed:wght@500;600&family=JetBrains+Mono:wght@400;500&family=Noto+Sans+Math&display=swap">
+<style>
+/* Layout: full-screen pan/zoom canvas on a dot grid. Top: Requirement. Centre: the unknown rate R.
+   Middle: World | System (the two factors of R = Σ λ·p). Below: Evidence. Right: Inference.
+   Bottom: Mathematical foundations, the bedrock every step stands on, linked upward by dotted lines.
+   Symbol colours encode meaning everywhere. Robotaxi example values sit on every card. Course design system (sinadra). */
+:root{
+  --paper:#f6f7f5; --ink:#1a2220; --ink-soft:#4a5654; --ink-mute:#7d8986; --rule:#d5dbd8; --panel:#ebefed; --card:#ffffff; --dot:#cdd5d2;
+  --c-req:#0e6b63; --c-world:#2563a6; --c-sys:#7444b3; --c-test:#3d7a1f; --c-conf:#b0306f; --c-risk:#1a2220; --c-math:#5d5a52; --c-hara:#7a5a1e; --c-scen:#2f6f73;
+  --c-ex:#a8551c; --caution:#a8551c; --good:#1f7a3d; --bad:#b3261e;
+  --serif:"Source Serif 4","Iowan Old Style",Georgia,serif;
+  --label:"IBM Plex Sans Condensed","Arial Narrow",system-ui,sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --math:"STIX Two Math","Cambria Math","Latin Modern Math","Noto Sans Math",math;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --paper:#121816; --ink:#e3e9e6; --ink-soft:#a3b0ac; --ink-mute:#73807c; --rule:#2c3734; --panel:#1b2421; --card:#18201d; --dot:#27312e;
+  --c-req:#4fb8ad; --c-world:#74a9e8; --c-sys:#b593ee; --c-test:#8cc46a; --c-conf:#ec7fb2; --c-risk:#e3e9e6; --c-math:#c9c3b2; --c-hara:#d4b06a; --c-scen:#7cc4c8;
+  --c-ex:#e0954f; --caution:#e0954f; --good:#63c283; --bad:#f08a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121816; --ink:#e3e9e6; --ink-soft:#a3b0ac; --ink-mute:#73807c; --rule:#2c3734; --panel:#1b2421; --card:#18201d; --dot:#27312e;
+  --c-req:#4fb8ad; --c-world:#74a9e8; --c-sys:#b593ee; --c-test:#8cc46a; --c-conf:#ec7fb2; --c-risk:#e3e9e6; --c-math:#c9c3b2; --c-hara:#d4b06a; --c-scen:#7cc4c8;
+  --c-ex:#e0954f; --caution:#e0954f; --good:#63c283; --bad:#f08a80; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 16px/1.55 var(--serif);overflow:hidden}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--paper)}
+math{font-family:var(--math)}
+.cat-req{color:var(--c-req)} .cat-world{color:var(--c-world)} .cat-sys{color:var(--c-sys)} .cat-test{color:var(--c-test)} .cat-conf{color:var(--c-conf)} .cat-risk{color:var(--c-risk)}
+.sym{transition:background-color .15s;border-radius:3px}
+.sym.hl{background-color:color-mix(in srgb,currentColor 18%,transparent)}
+.app{position:fixed;inset:0;display:flex;flex-direction:column}
+header{display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding-top:calc(env(safe-area-inset-top,0px) + 10px);padding-bottom:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--rule);background:var(--paper);z-index:5}
+.crumb{font:500 12px/1.2 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-soft)}
+header h1{font-weight:600;font-size:21px;line-height:1.15;margin:0;letter-spacing:-.01em}
+.tools{margin-left:auto;display:flex;gap:6px;flex-wrap:wrap}
+button,.btnlink{font:600 12px/1 var(--label);letter-spacing:.05em;text-transform:uppercase;color:var(--c-req);background:transparent;border:1px solid var(--c-req);border-radius:3px;padding:8px 11px;cursor:pointer;min-height:34px;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+button.solid{background:var(--c-req);color:var(--paper)}
+button[aria-pressed="true"]{background:color-mix(in srgb,var(--c-req) 14%,transparent)}
+.btnlink{color:var(--c-ex);border-color:var(--c-ex)}
+button:focus-visible,.node:focus-visible,.btnlink:focus-visible{outline:2px solid var(--c-req);outline-offset:2px}
+button:disabled{opacity:.4;cursor:default}
+.stage{position:relative;flex:1;overflow:hidden;touch-action:none;cursor:grab;background-color:var(--paper);background-image:radial-gradient(var(--dot) 1px,transparent 1.3px);background-size:26px 26px}
+.stage.drag{cursor:grabbing}
+.world{position:absolute;left:0;top:0;transform-origin:0 0}
+.zone{position:absolute;border-radius:22px;border:1.5px dashed color-mix(in srgb,var(--zc) 45%,transparent);background:color-mix(in srgb,var(--zc) 6%,transparent)}
+.zone .zl{position:absolute;left:22px;top:-14px;background:var(--paper);padding:2px 10px;font:600 15px/1.3 var(--label);letter-spacing:.07em;text-transform:uppercase;color:var(--zc);white-space:nowrap}
+.zone .zd{position:absolute;left:26px;top:16px;font:italic 14px/1.3 var(--serif);color:var(--ink-soft);white-space:nowrap}
+.z-req{--zc:var(--c-req)} .z-world{--zc:var(--c-world)} .z-sys{--zc:var(--c-sys)} .z-evi{--zc:var(--c-test)} .z-inf{--zc:var(--c-conf)} .z-risk{--zc:var(--c-risk)} .z-math{--zc:var(--c-math)} .z-hara{--zc:var(--c-hara)} .z-scen{--zc:var(--c-scen)}
+.zone.z-math{border-style:solid;background:color-mix(in srgb,var(--c-math) 9%,transparent)}
+svg.edges{position:absolute;left:0;top:0;overflow:visible;pointer-events:none}
+svg.edges path{fill:none;stroke:var(--ink-mute);stroke-opacity:.55;stroke-width:1.6;transition:opacity .2s,stroke-width .2s}
+svg.edges path.math{stroke:var(--c-math);stroke-opacity:.38;stroke-width:1.3;stroke-dasharray:2 5;stroke-linecap:round}
+svg.edges path.hi{stroke:var(--ink);stroke-opacity:1;stroke-width:2.6}
+svg.edges path.math.hi{stroke:var(--c-math);stroke-opacity:1;stroke-width:2.4;stroke-dasharray:3 5}
+svg.edges path.dim{opacity:.12}
+.world.nomath svg.edges path.math:not(.hi){display:none}
+.elab{position:absolute;transform:translate(-50%,-50%);font-size:15px;background:var(--card);border:1px solid var(--rule);border-radius:12px;padding:1px 9px;white-space:nowrap;pointer-events:none;transition:opacity .2s;text-align:center;line-height:1.3}
+.elab .ev{display:none;font:500 11.5px/1.3 var(--mono);color:var(--c-ex)}
+.world.ex .elab .ev{display:block}
+.elab.math{display:none}
+.elab.math.hi{display:block;border-color:var(--c-math)}
+.elab.hi{border-color:var(--ink)} .elab.dim{opacity:.12}
+.node{position:absolute;width:250px;background:var(--card);border:1px solid var(--rule);border-radius:10px;padding:12px 14px 13px;cursor:pointer;transition:opacity .2s,box-shadow .2s;box-shadow:inset 0 4px 0 var(--zc)}
+.node:hover{box-shadow:inset 0 4px 0 var(--zc),0 6px 18px rgba(0,0,0,.08)}
+.node .kind{font:600 11px/1 var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--zc);margin-top:4px}
+.node .nt{font-weight:600;font-size:18px;line-height:1.22;margin-top:5px;text-wrap:balance}
+.node .nq{font-style:italic;font-size:14.5px;color:var(--ink-soft);line-height:1.35;margin-top:3px}
+.node .nm{margin-top:9px;padding-top:8px;border-top:1px solid var(--rule);font-size:19px;text-align:center;overflow-x:auto}
+.node .chip{display:none;margin-top:8px;font:500 12.5px/1.35 var(--mono);color:var(--c-ex);background:color-mix(in srgb,var(--c-ex) 9%,transparent);border-radius:4px;padding:5px 7px}
+.node .chip b{font:600 10.5px/1 var(--label);letter-spacing:.07em;text-transform:uppercase;display:block;margin-bottom:3px}
+.world.ex .node .chip{display:block}
+.node.sel{box-shadow:inset 0 4px 0 var(--zc),0 0 0 3px var(--zc)}
+.node.dim{opacity:.22}
+.node.risk{width:290px;border-width:2px;border-color:var(--ink)}
+.node.risk .nm{font-size:24px}
+.node.mathn{background:color-mix(in srgb,var(--c-math) 4%,var(--card))}
+.world.far .nm,.world.far .elab,.world.far .zd,.world.far .chip{display:none!important}
+.world.far .nt{font-size:28px}.world.far .nq{font-size:21px}.world.far .zone .zl{font-size:26px;top:-20px}
+.panel{position:absolute;right:14px;top:14px;bottom:14px;width:min(440px,calc(100% - 28px));background:var(--paper);border:1px solid var(--rule);border-radius:12px;box-shadow:0 14px 36px rgba(0,0,0,.14);display:flex;flex-direction:column;z-index:4;margin-right:env(safe-area-inset-right,0px)}
+.ph{display:flex;align-items:flex-start;gap:10px;padding:16px 18px 4px}
+.ph .tag{font:600 12px/1 var(--label);letter-spacing:.08em;text-transform:uppercase;color:var(--zc)}
+.ph h2{font-weight:600;font-size:24px;line-height:1.15;margin:6px 0 0;text-wrap:balance}
+.ph .x{margin-left:auto;padding:6px 10px}
+.pb{padding:2px 18px 18px;overflow-y:auto;min-height:0}
+.dek{font-style:italic;color:var(--ink-soft);font-size:17px;line-height:1.4;margin:4px 0 12px}
+.pb h3{font:600 12px/1.3 var(--label);letter-spacing:.07em;text-transform:uppercase;color:var(--ink-soft);margin:20px 0 6px}
+.pb p{margin:0 0 10px;max-width:62ch}
+.who{display:flex;flex-wrap:wrap;gap:4px 14px;font:500 13px/1.35 var(--label);color:var(--ink-soft);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:6px 0;margin:4px 0 6px}
+.who b{font-weight:600;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--ink);margin-right:4px}
+.w{font-weight:600;border-radius:3px;cursor:help;transition:background-color .15s}
+.w.hl{background-color:color-mix(in srgb,currentColor 16%,transparent)}
+.disp{background:var(--panel);border-radius:4px;padding:14px 12px;font-size:21px;overflow-x:auto;text-align:center}
+.disp.ex{font-size:17px;background:transparent;border:1px dashed var(--c-ex)}
+.disp .sym{cursor:pointer}
+.exbox{border-left:3px solid var(--c-ex);padding:.15rem 0 .15rem 12px;margin:6px 0 4px}
+.exbox .exl{font:600 12px/1.3 var(--label);letter-spacing:.07em;text-transform:uppercase;color:var(--c-ex);margin-bottom:6px}
+.exbox a{color:var(--c-ex);font:600 13px var(--label);letter-spacing:.03em}
+table.syms{border-collapse:collapse;width:100%;font-size:14px}
+table.syms td{padding:6px 6px;border-bottom:1px solid var(--rule);vertical-align:top}
+table.syms td:first-child{font-size:17px;white-space:nowrap;width:1%}
+table.syms td.src{font:500 12px/1.35 var(--label);color:var(--ink-mute);letter-spacing:.02em;width:30%}
+table.syms tr{cursor:pointer;transition:background-color .15s}
+table.syms tr.hl{background:color-mix(in srgb,var(--rc) 12%,transparent)}
+.assume{border-left:3px solid var(--caution);padding:.2rem 0 .2rem 12px;margin:16px 0}
+.assume strong{display:block;font:600 12px/1 var(--label);letter-spacing:.07em;text-transform:uppercase;color:var(--caution);margin-bottom:6px}
+.viz{border:1px solid var(--rule);border-radius:4px;background:var(--card);padding:10px 10px 12px;margin-top:6px}
+.viz svg{width:100%;height:auto;display:block}
+.viz .ctl{display:flex;align-items:center;gap:10px;margin-top:8px;font:500 13px var(--label);color:var(--ink-soft)}
+.viz .ctl input[type=range]{flex:1;accent-color:var(--c-req)}
+.viz .ctl output{font:500 13px var(--mono);color:var(--ink);min-width:80px;text-align:right;font-variant-numeric:tabular-nums}
+.viz .vout{font-size:14.5px;line-height:1.5;margin-top:8px}
+.viz .vout b{font-family:var(--mono);font-weight:500;font-size:13.5px}
+.viz .cap{font:500 12px/1.35 var(--label);color:var(--ink-mute);margin-top:6px;letter-spacing:.02em}
+.conn{display:flex;flex-direction:column;gap:6px}
+.conn button{display:flex;align-items:center;gap:10px;text-transform:none;letter-spacing:0;font:500 14px var(--label);color:var(--ink);border-color:var(--rule);text-align:left;width:100%}
+.conn .dot{width:9px;height:9px;border-radius:50%;background:var(--zc);flex:none}
+.conn .cl{margin-left:auto;font-size:15px;font-family:var(--math)}
+.tour{display:flex;gap:8px;align-items:center;padding:10px 18px calc(12px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--rule)}
+.tour .ts{font:500 12px var(--label);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-mute);margin-right:auto}
+.keygrid{display:grid;gap:12px}
+.keycat{border-left:4px solid var(--rc);padding-left:10px}
+.keycat .kn{font:600 13px var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--rc)}
+.keycat .kd{font-style:italic;color:var(--ink-soft);font-size:14.5px}
+.hint{position:absolute;left:max(16px,env(safe-area-inset-left,0px));bottom:calc(14px + env(safe-area-inset-bottom,0px));font:500 12.5px var(--label);color:var(--ink-soft);background:var(--paper);border:1px solid var(--rule);border-radius:999px;padding:7px 13px;pointer-events:none;letter-spacing:.02em}
+@media (max-width:760px){
+  .panel{left:0;right:0;top:auto;bottom:0;width:auto;max-height:62%;border-radius:16px 16px 0 0;margin:0}
+  .ph,.pb{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .crumb,.hint{display:none}
+  header h1{font-size:18px}
+}
+.node .lv{float:right;font:500 10.5px/1 var(--label);letter-spacing:.04em;text-transform:none;color:var(--ink-mute)}
+.lvtag{display:inline-block;font:600 11px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--rule);border-radius:999px;padding:4px 8px;color:var(--ink-soft);margin-left:8px;vertical-align:2px}
+.plainbox{background:color-mix(in srgb,var(--c-req) 7%,var(--paper));border-radius:6px;padding:12px 14px;font-size:16.5px;line-height:1.6;margin:4px 0 6px}
+.mathlead{font:italic 14.5px/1.45 var(--serif);color:var(--ink-soft);margin:0 0 8px}
+.primer table{border-collapse:collapse;width:100%;font-size:14.5px;margin:6px 0 10px}
+.primer td,.primer th{padding:5px 6px;border-bottom:1px solid var(--rule);text-align:left;vertical-align:top}
+.primer th{font:600 12px var(--label);letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft)}
+.primer td:first-child{font-family:var(--mono);font-size:13.5px;white-space:nowrap}
+.primer .idea{border-left:3px solid var(--c-req);padding-left:12px;margin:14px 0}
+.primer .idea b.h{display:block;font:600 13px/1.3 var(--label);letter-spacing:.05em;text-transform:uppercase;color:var(--c-req);margin-bottom:4px}
+.primer dl{margin:6px 0}.primer dt{font-weight:600;margin-top:8px}.primer dd{margin:2px 0 0;color:var(--ink-soft)}
+.node .isot{margin-top:6px;display:inline-block;font:600 10.5px/1 var(--label);letter-spacing:.06em;text-transform:uppercase;color:var(--c-req);border:1px solid color-mix(in srgb,var(--c-req) 50%,transparent);border-radius:999px;padding:3px 7px}
+.world.far .isot{font-size:16px;padding:5px 10px}
+.node .nsrc{margin-top:7px;font:500 11.5px/1.3 var(--label);color:var(--ink-mute);letter-spacing:.02em}
+.world.far .nsrc{display:none}
+ul.srcl{list-style:none;padding:0;margin:4px 0 6px;display:grid;gap:8px}
+ul.srcl li{font-size:14.5px;line-height:1.45}
+ul.srcl a{color:var(--c-req)}
+.sst{display:inline-block;font:600 10.5px/1 var(--label);letter-spacing:.05em;text-transform:uppercase;border-radius:999px;padding:3px 7px;margin-right:7px;vertical-align:1px}
+.sst-v{color:var(--good);border:1px solid var(--good)}
+.sst-n{color:var(--ink-soft);border:1px solid var(--rule)}
+.sst-o{color:var(--c-ex);border:1px solid var(--c-ex)}
+.sfull{display:block;font:500 12px/1.4 var(--label);color:var(--ink-mute);margin-top:2px}
+ol.lsteps{padding-left:1.4rem;margin:6px 0 0}
+ol.lsteps li{margin:0 0 12px}
+ol.lsteps li::marker{font:600 13px var(--label);color:var(--c-math)}
+ol.lsteps p{margin:0 0 6px}
+.disp.lsd{font-size:18px;padding:10px}
+.check{border:1px solid var(--rule);border-radius:6px;padding:10px 12px;background:var(--card)}
+.check details{margin-top:4px}.check summary{cursor:pointer;font:600 13px var(--label);letter-spacing:.04em;color:var(--c-req)}
+.check details p{margin:8px 0 0}
+.prelink{font:500 13px var(--label);text-transform:none;letter-spacing:0;padding:4px 9px;min-height:28px;color:var(--c-math);border-color:var(--c-math);margin:2px 4px 2px 0}
+.primer .notation td:first-child{font-family:var(--math);font-size:17px}
+.mpath{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="app">
+  <header>
+    <div>
+      <div class="crumb"><a href="../README.md" style="color:inherit">SOTIF Risk Course</a> · Map</div>
+      <h1>SOTIF Validation Atlas</h1>
+    </div>
+    <div class="tools">
+      <a class="btnlink" href="robotaxi-crosswalk-example.html">Example page</a>
+      <button id="startBtn" class="solid">Start here</button>
+      <button id="tourBtn">ISO 21448 tour</button>
+      <button id="exBtn" aria-pressed="true">Robotaxi values</button>
+      <button id="mathBtn" aria-pressed="true">Maths links</button>
+      <button id="keyBtn">Colours</button>
+      <button id="fitBtn">Fit</button>
+      <button id="zoomOut" aria-label="Zoom out">−</button>
+      <button id="zoomIn" aria-label="Zoom in">+</button>
+    </div>
+  </header>
+  <div class="stage" id="stage">
+    <div class="world ex" id="world"><svg class="edges" id="edges"></svg></div>
+    <div class="hint" id="hint">Drag to pan · scroll or pinch to zoom · tap a card</div>
+    <aside class="panel" id="panel" hidden>
+      <div class="ph"><div><div class="tag" id="pTag"></div><h2 id="pTitle"></h2></div><button class="x" id="pClose" aria-label="Close panel">✕</button></div>
+      <div class="pb" id="pBody"></div>
+      <div class="tour" id="tourBar" hidden><span class="ts" id="tourStep"></span><button id="tourPrev">Back</button><button id="tourNext" class="solid">Next</button></div>
+    </aside>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/KaTeX/0.16.9/katex.min.js"></script>
+<script>
+const EXURL="robotaxi-crosswalk-example.html";
+/* ---------- Symbol registry: one colour per kind of quantity, everywhere ---------- */
+const CAT={
+  req:{n:"Requirement",d:"What you demand of the car"},
+  world:{n:"World",d:"How often reality presents things; measured on the road"},
+  sys:{n:"System",d:"How your car behaves; measured by testing"},
+  test:{n:"Test design",d:"Choices you make about how to test"},
+  conf:{n:"Confidence",d:"How sure a claim is"},
+  risk:{n:"Target quantity",d:"The true rate every claim is about"}
+};
+const R_=String.raw;
+const SYM={
+ RH:{t:"R_H",c:"risk",n:"True rate at which the car causes harm H",s:"Never observed, only bounded"},
+ hped:{t:R_`h_{\text{ped}}`,c:"world",n:"Rate at which human drivers injure pedestrians in this ODD",s:"Human accident data matched to the ODD (synthetic placeholder here)"},
+ AH:{t:"A_H",c:"req",n:"Acceptable rate of harm H, the acceptance criterion",s:"Benchmark × margin × share"},
+ RHB:{t:"R_{HB}",c:"req",n:"Tolerable rate of the hazardous behaviour",s:"A_H ÷ chain (ISO 21448 C.2.1)"},
+ PE:{t:R_`P(E\mid HB)`,c:"world",n:"Chance the pedestrian steps into the path during the behaviour",s:"Field data"},
+ PC:{t:R_`P(\bar C\mid E)`,c:"world",n:"Chance the pedestrian cannot avoid the collision",s:"Field data, studies"},
+ PS:{t:R_`P(S\mid \bar C)`,c:"world",n:"Chance the collision causes an injury",s:"Accident data"},
+ R:{t:"R",c:"risk",n:"True rate of the hazardous behaviour, your car in its ODD",s:"Never observed, only bounded"},
+ b:{t:"b_k",c:"req",n:"Budget share of logical scenario k",s:"Equal protection per encounter"},
+ bu:{t:R_`b_{\text{unk}}`,c:"req",n:"Reserve for situations not yet in the catalogue",s:"10 % of R_HB"},
+ B:{t:"B",c:"req",n:"Budget left for the known logical scenarios",s:"R_HB − b_unk"},
+ h:{t:"h_k",c:"req",n:"Human-driver level in logical scenario k, as a behaviour rate",s:"Accident data per type"},
+ lam:{t:R_`\lambda_k`,c:"world",n:"Exposure: encounters with logical scenario k per hour",s:"Field driving"},
+ lamU:{t:R_`\lambda_k^{U}`,c:"world",n:"Upper confidence bound on the exposure",s:"Poisson bound on N_k and τ"},
+ p:{t:"p_k",c:"sys",n:"Probability the car fails in one encounter of logical scenario k",s:"Tests"},
+ pU:{t:R_`p_k^{U}`,c:"sys",n:"Upper confidence bound on the failure probability",s:"Zero-failure bound on sim runs"},
+ pstar:{t:R_`p_k^{*}`,c:"req",n:"Allowed failure probability per encounter",s:"b_k / λ_kᵁ"},
+ px:{t:"p_k(x)",c:"world",n:"How common each concrete scenario x is in reality",s:"Field driving"},
+ x:{t:"x",c:"world",n:"Concrete scenario parameters: approach speed, walking speed, detection distance …",s:"Scenario model"},
+ f:{t:"f(x)",c:"sys",n:"Failure map: 1 if the car fails at x, otherwise 0",s:"Tests"},
+ pi:{t:R_`\pi_{k,c}`,c:"world",n:"Share of encounters with triggering condition c",s:"Field data"},
+ piTC:{t:R_`\pi_{\mathrm{TC}}`,c:"world",n:"Share of encounters with any triggering condition",s:"Sum over TC strata"},
+ pkc:{t:R_`p_{k,c}`,c:"sys",n:"Failure probability under condition c",s:"Targeted tests"},
+ q:{t:"q(x)",c:"test",n:"Test density: where you choose to test",s:"Designed after the pilot"},
+ w:{t:"w(x)",c:"test",n:"Importance weight: real frequency ÷ test frequency",s:"p_k(x) / q(x)"},
+ wmax:{t:R_`w_{k}`,c:"test",n:"Importance factor: largest weight where failures are possible",s:"Pilot scenario exploration"},
+ n:{t:"n_k",c:"test",n:"Number of simulation runs for logical scenario k",s:"Frozen plan"},
+ N:{t:"N_k",c:"world",n:"Encounters of logical scenario k counted in field data",s:"Field driving"},
+ tau:{t:R_`\tau`,c:"world",n:"Hours driven in the ODD",s:"Field driving"},
+ C:{t:"C",c:"conf",n:"Overall confidence, 0.95",s:"Your choice (ISO 21448 C.3 calls it α)"},
+ Cb:{t:"C_b",c:"conf",n:"Confidence of each single bound, 1 − 0.05/8 = 99.375 %",s:"Bonferroni over 8 bounds"},
+ L:{t:"L",c:"conf",n:"Zero-failure factor ln(1/(1 − C_b)) = 5.08 (3.0 at 95 %)",s:"From C_b"},
+ chi:{t:R_`\chi^2_{C_b}`,c:"conf",n:"C_b-quantile of the chi-square distribution",s:"Table lookup"},
+ lnew:{t:R_`\lambda_{\text{new}}`,c:"world",n:"Rate of encounters with uncatalogued situations",s:"Discovery log"},
+ lnewU:{t:R_`\lambda_{\text{new}}^{U}`,c:"world",n:"Upper bound on that rate",s:"Discovery log"},
+ pnew:{t:R_`p_{\text{new}}`,c:"sys",n:"Failure probability in an uncatalogued situation",s:"Design argument, not testable"},
+ N1:{t:"N_1",c:"world",n:"Kinds of situation seen exactly once",s:"Discovery log"},
+ Nt:{t:"N",c:"world",n:"Total situation encounters logged",s:"Discovery log"},
+ Pmiss:{t:R_`P_{\text{miss}}`,c:"sys",n:"Chance the car does not notice leaving its ODD",s:"ODD-exit tests"},
+ pc:{t:R_`\pi_{c}`,c:"world",n:"Share of driving under the excluded condition",s:"Weather data"},
+ e:{t:"e",c:"test",n:"Simulator error on the safety metric",s:"Paired runs"},
+ ys:{t:R_`y_{\text{sim}}`,c:"test",n:"Distance to the pedestrian at conflict time, in simulation",s:"Simulation"},
+ yr:{t:R_`y_{\text{real}}`,c:"world",n:"Same distance on the proving ground",s:"Proving ground"},
+ yc:{t:R_`y_{\text{crit}}`,c:"req",n:"Distance that counts as a failure (contact)",s:"Pass/fail criterion"},
+ delta:{t:R_`\delta`,c:"test",n:"Margin a simulated pass must clear",s:"Error model"},
+ mu:{t:R_`\hat\mu`,c:"test",n:"Mean simulator error (bias)",s:"Paired runs"},
+ sig:{t:R_`\sigma^{U}`,c:"test",n:"Upper bound on the simulator error spread",s:"Paired runs, χ² bound"},
+ z:{t:"z",c:"conf",n:"Safety factor in standard deviations",s:"Your choice"},
+ Phi:{t:R_`\Phi`,c:"conf",n:"Standard normal cumulative distribution",s:"Table"},
+ K:{t:"K",c:"req",n:"Number of logical scenarios",s:"Derived from the hazardous event"},
+ m:{t:"m",c:"conf",n:"Number of bounds that must hold together",s:"Count them in the stop rule"},
+ nex:{t:R_`n_{\text{exit}}`,c:"test",n:"ODD-exit test runs",s:"Test campaign"}
+};
+const KEY={};let ki=1;
+for(const id in SYM){const hex="#"+(ki++).toString(16).padStart(6,"0");SYM[id].hex=hex;KEY[hex]=id;}
+const S=(id,tex)=>`\\textcolor{${SYM[id].hex}}{${tex||SYM[id].t}}`;
+const W=(id,txt)=>`<span class="w cat-${SYM[id].c}" data-s="${id}">${txt}</span>`;
+function tex(src,display=false){
+  if(!window.katex)return `<code>${src}</code>`;
+  const html=katex.renderToString(src,{output:"mathml",displayMode:display,throwOnError:false,strict:false});
+  const t=document.createElement("template");t.innerHTML=html;
+  t.content.querySelectorAll("[mathcolor]").forEach(m=>{const id=KEY[m.getAttribute("mathcolor").toLowerCase()];if(id){m.removeAttribute("mathcolor");m.setAttribute("class","sym cat-"+SYM[id].c);m.setAttribute("data-s",id);}});
+  const d=document.createElement("div");d.appendChild(t.content);return d.innerHTML;
+}
+function symsIn(src){const out=[];for(const h of src.match(/#[0-9a-f]{6}/g)||[]){const id=KEY[h];if(id&&!out.includes(id))out.push(id);}return out;}
+
+/* ---------- Zones ---------- */
+const ZONES={
+  req:{n:"Requirement",d:"What must be true, and how the target is shared out",cls:"z-req"},
+  risk:{n:"The unknown",d:"One true number, never observed",cls:"z-risk"},
+  world:{n:"World",d:"How often reality presents things",cls:"z-world"},
+  sys:{n:"System",d:"How your car behaves when it happens",cls:"z-sys"},
+  evi:{n:"Evidence",d:"What you can drive, run and count",cls:"z-evi"},
+  inf:{n:"Inference",d:"How evidence becomes a claim",cls:"z-inf"},
+  hara:{n:"Specification and hazard analysis",d:"ISO 21448 Clauses 5–8: function, hazards, triggering conditions, modifications",cls:"z-hara"},
+  scen:{n:"Scenarios and test cases",d:"Parameters, known scenarios (Cl. 10), exploration (Cl. 11)",cls:"z-scen"},
+  math:{n:"Mathematical foundations",d:"The bedrock every step stands on. Dotted lines show where each result is used",cls:"z-math"}
+};
+
+/* ---------- Nodes. ev = robotaxi chip, exT = robotaxi sentence, ex = robotaxi formula, step = section of the example page ---------- */
+const N=[
+ /* HARA (ISO 21448 Clauses 6–7) */
+ {id:"spec",z:"hara",x:-960,y:150,t:"Specification and ODD",q:"What is the function supposed to do, and where?",
+  card:R_`\text{function}+\text{ODD}`,
+  big:R_`\text{specification}=\{\text{intended behaviour},\ \text{ODD},\ \text{measurable definitions}\}`,
+  words:"SOTIF starts from what the function is supposed to do and where. The specification must be precise enough to decide whether a behaviour is wrong, and measurable enough to count it in logs and in simulation.",
+  who:["System and safety leads","Concept phase"],
+  ev:"Urban L4, ≤ 50 km/h, day and night",exT:"“Does not yield” = enters a conflict zone above 10 km/h while a road user with right of way is less than 2 s from it. Heavy snow and fog are outside the ODD.",step:"s01",
+  why:"Every later step refers back to it: hazards are deviations from it, scenarios are drawn from its ODD, pass criteria come from its definitions.",
+  assume:"A behaviour that is not defined measurably cannot be counted, so no rate can be shown for it."},
+ {id:"hz",z:"hara",x:-660,y:150,t:"Hazard identification",q:"What can the vehicle do wrong?",
+  card:R_`HB_1,\dots,HB_I`,
+  big:R_`\{HB_1,\dots,HB_I\}\quad\text{vehicle-level behaviours, each with its own acceptance criterion}`,
+  words:"A hazardous behaviour describes what the vehicle does, without any situation: does not yield, unintended braking, acceleration or steering, insufficient deceleration, loss of braking, steering or propulsion. ISO 21448 asks for an acceptance criterion per hazardous behaviour.",
+  who:["Safety lead with the HARA team","Concept phase"],
+  ev:"6 behaviours; this example: HB-1 does not yield",exT:"HB-1 does not yield (no or too little deceleration although another road user has right of way). HB-2 unintended braking. HB-3 unintended acceleration. HB-4 unintended steering. HB-5 insufficient deceleration. HB-6 loss of braking, steering or propulsion. None of these names a situation.",step:"s01",
+  why:"Each behaviour gets its own criterion and its own evidence. Several behaviours can injure the same kind of road user, so they must share that harm's budget.",
+  assume:"The list must be complete at vehicle level. A behaviour that is missing has no criterion and no evidence."},
+ {id:"he",z:"hara",x:-360,y:150,t:"Hazardous events",q:"In which situations does a behaviour become dangerous?",
+  card:R_`HE=HB\times\text{situation}`,
+  big:R_`\text{hazardous event}=\text{hazardous behaviour}\times\text{operational situation}\;\to\;(S,\ C)`,
+  words:"A behaviour only causes harm in an operational situation where someone is exposed. Each combination is a hazardous event, rated for severity S and controllability C as in the ISO 26262 HARA. Each hazardous event has its own harm class and therefore its own human accident data.",
+  who:["HARA team","Concept phase"],
+  ev:"HE-1.1: does not yield × pedestrian at zebra crossing",exT:"HB-1 has several hazardous events: HE-1.1 pedestrian about to cross at a zebra crossing, HE-1.2 cyclist going straight while the robotaxi turns right, HE-1.3 oncoming vehicle at an unprotected left turn, HE-1.4 vehicle with right of way at a junction. This example follows HE-1.1.",step:"s01",
+  why:"The hazardous event is the bridge in both directions: up to the harm class and its human benchmark, and down to the test scenarios.",
+  assume:"“Not yielding to a pedestrian at a zebra crossing” is a hazardous event, not a behaviour. Mixing the two hides the other situations in which the same behaviour is dangerous."},
+ {id:"fi",z:"hara",x:-660,y:400,t:"Insufficiencies and triggers",q:"Why could the function get it wrong?",
+  card:R_`\text{TC}\to\text{FI}\to HB`,
+  big:R_`\text{triggering condition}\;\to\;\text{functional insufficiency}\;\to\;\text{hazardous behaviour}`,
+  words:"A triggering condition (darkness, occlusion) activates a functional insufficiency (late detection, wrong intent prediction, late planning decision), which shows up at vehicle level as a hazardous behaviour.",
+  who:["Safety lead with perception and planning teams","Concept phase, revisited after each campaign"],
+  ev:"Late detection behind parked cars; low light",exT:"For HB-1: perception detects occluded or dark-clothed road users late; prediction misjudges crossing intent; the planner decides to yield too late. Triggers: occlusion, low light, small pedestrians, wet-road reflections.",step:"s01",
+  why:"The trigger list drives everything downstream: logical scenarios, targeted test cases and where the statistical tests concentrate.",
+  assume:"The list is never complete. What is missing ends up in the reserve for unknown situations."},
+ {id:"mod",z:"hara",x:-960,y:400,t:"Functional modification",q:"What if the response to a trigger is not acceptable?",
+  card:R_`\text{restrict}\;\Rightarrow\;${S("pnew")}\downarrow`,
+  big:R_`\text{response not acceptable (7.4)}\;\Rightarrow\;\text{modify, restrict or hand over (8.3)}`,
+  words:`Clause 7.4 asks whether the system's response to each triggering condition is acceptable. Where it is not, Clause 8 changes the function: system modification, functional restriction or handing over authority. A good restriction also caps the ${W("pnew","failure probability in situations nobody listed")}.`,
+  who:["Function owner with the safety lead","Concept and pilot phases"],
+  ev:"10 km/h near unclassified objects",exT:"Any unclassified object within 3 m of a crosswalk caps speed at 10 km/h. The restriction is tested on its own and argues p_new ≤ 10⁻⁴ for the reserve.",step:"s06",
+  why:"Modifications move risk out of the statistical argument into the design, which is often the only way to handle unknown scenarios.",
+  assume:"A restriction must itself be verified, and it can create new hazardous behaviours, for example unintended braking."},
+ {id:"sevc",z:"hara",x:-360,y:400,t:"Severity and controllability",q:"How bad, and can people still avoid it?",
+  card:R_`${S("PC")},\ ${S("PS")}`,
+  big:R_`${S("PC")}=P(\text{not avoided}),\qquad ${S("PS")}(v)=\frac{1}{1+e^{-(\beta_0+\beta_1 v)}}`,
+  words:`The HARA ratings become probabilities for the Annex C chain: how often the exposed person ${W("PC","cannot avoid")} the collision, and how often a collision at impact speed v ${W("PS","causes the harm")}. Injury-risk curves give the second as a function of speed.`,
+  ex:R_`${S("PC")}=0.5,\quad ${S("PS")}=0.8\ \ (\text{any reported injury})`,
+  who:["Accident-data team","Concept phase"],
+  ev:"P(C̄|E) = 0.5, P(S|C̄) = 0.8",exT:"For HE-1.1 and any reported injury. For a severity class such as MAIS3+, P(S | C̄) would come from an injury-risk curve over impact speed.",step:"s01",
+  why:"These numbers turn a criterion on harm into a target on the behaviour.",
+  assume:"Severity depends on impact speed, which differs between logical scenarios. One P(S | C̄) for all of them is a simplification."},
+ /* Requirement */
+ {id:"hbdef",z:"req",x:80,y:150,t:"From behaviour to harm",q:"What must line up for someone to get hurt?",
+  card:R_`HB\to E\to \bar C\to S\to H`,
+  big:R_`\underbrace{HB}_{\text{car}}\;\to\;\underbrace{E}_{\text{exposure}}\;\to\;\underbrace{\bar C}_{\text{not avoided}}\;\to\;\underbrace{S}_{\text{severity}}\;\to\;H`,
+  words:"A hazardous behaviour (HB) is a vehicle-level behaviour such as not yielding or unintended braking. It causes harm only in an operational situation where someone is exposed (together: the hazardous event E), when nobody avoids it, and with enough severity.",
+  who:["Safety lead with the HARA team","Concept phase"],
+  ev:"HB-1 does not yield · HE-1.1 zebra crossing",
+  exT:"Behaviour: does not yield (enters a conflict zone above 10 km/h while a road user with right of way is less than 2 s from it). Situation: pedestrian about to cross at a zebra crossing. Event: the pedestrian steps into the path. Harm: an injured pedestrian.",step:"s01",
+  why:"Every number later is tied to this definition. A vague behaviour makes exposure and test pass criteria impossible to define."},
+ {id:"bench",z:"req",x:400,y:150,t:"Human benchmark",q:"How often do human drivers cause this harm?",
+  card:R_`${S("hped")}\ \text{per hour}`,
+  big:R_`${S("hped")}=\frac{\text{harm events caused by human drivers}}{\text{hours of human driving}}\quad(\text{matched to the ODD})`,
+  words:`The ${W("hped","human rate")} for the same harm class, matched to the ODD's road types, speeds and times, is the reference for a positive risk balance.`,
+  ex:R_`${S("hped")}=\frac{50}{1.0\cdot10^{7}\ \text{h}}=5.0\cdot 10^{-6}\ \text{h}^{-1}\quad(\text{synthetic placeholder})`,
+  who:["Accident-data team","Concept phase"],
+  ev:"h_ped = 5.0·10⁻⁶ /h (placeholder)",exT:"Synthetic placeholder: 50 pedestrian injuries in 10 million hours of human driving. Replace it with GIDAS or national accident data matched to the ODD.",step:"s03",
+  why:"Positive risk balance needs a number to beat. Without a matched benchmark the acceptance criterion is arbitrary.",
+  assume:"The benchmark must be matched to the ODD: road type, speed, time of day, region. An unmatched benchmark is the first thing an assessor challenges."},
+ {id:"crit",z:"req",x:720,y:150,t:"Acceptance criterion",q:"What must be true?",
+  card:R_`${S("RH")}\le ${S("AH")}`,
+  big:R_`${S("RH")}\;\le\;${S("AH")}=\text{share}\times\text{margin}\times ${S("hped")}`,
+  words:`The ${W("RH","true rate at which the car causes harm")} must stay below the ${W("AH","acceptable rate")}. This is a statement about the car, not about any test.`,
+  ex:R_`${S("AH")} = 0.2\times 0.1\times 5.0\cdot10^{-6}=1.0\cdot10^{-7}\ \text{h}^{-1}`,
+  who:["Safety lead, reviewed by the assessor","Concept phase"],
+  ev:"A_H = 1.0·10⁻⁷ /h (once per 10 M hours)",exT:"Ten times better than humans on pedestrian injuries, and hazardous event HE-1.1 gets 20 % of that budget. Plausibility (Kröger 2025): about 4·10⁻⁸ fatal or serious injuries per hour; the pedestrian class budget of 5·10⁻⁷ for any injury fits only if fewer than 1 in 12.5 of these injuries are serious.",step:"s02",
+  why:"Every other card exists to make a defensible claim about this one inequality. Statistics only enters later, when you decide how to show it.",
+  assume:"The shares of every hazardous event that injures pedestrians must add up to at most 100 %."},
+ {id:"hb",z:"req",x:1040,y:150,t:"Tolerable behaviour rate",q:"How often may the car misbehave?",
+  card:R_`${S("RHB")}=\dfrac{${S("AH")}}{${S("PE","P(E)")}\,${S("PC",R_`P(\bar C)`)}\,${S("PS","P(S)")}}`,
+  big:R_`${S("RHB")}=\frac{${S("AH")}}{${S("PE")}\;${S("PC")}\;${S("PS")}}`,
+  words:`Every link of the chain below 1 lets the ${W("RHB","behaviour rate")} be higher than the ${W("AH","harm rate")}. The software only controls the behaviour; the rest is the world.`,
+  ex:R_`${S("RHB")}=\frac{1.0\cdot10^{-7}}{0.5\cdot 0.5\cdot 0.8}=5.0\cdot10^{-7}\ \text{h}^{-1}`,
+  who:["Safety lead","Concept phase"],
+  ev:"R_HB = 5.0·10⁻⁷ /h (once per 2 M hours)",exT:"In zebra-crossing situations the robotaxi may fail to yield at most once every two million hours of driving.",step:"s03",
+  why:"ISO 21448 Annex C, Formulas (C.1)–(C.2). From here on every number is a behaviour rate.",
+  assume:"The correct chain conditions on everything before: P(S | C̄, E, HB) (C.2.1 Note 5; Putze et al. 2023). If logical scenarios differ in impact speed, give each its own chain; the workbook supports this."},
+ {id:"vt",z:"req",x:1360,y:150,t:"Naive validation target",q:"How long would road testing take?",
+  card:R_`${S("tau")}=\dfrac{\ln 20}{${S("RHB")}}\approx\dfrac{3}{${S("RHB")}}`,
+  big:R_`e^{-${S("RHB")}\,${S("tau")}}\le 1-${S("C")}\;\Rightarrow\;${S("tau")}=\frac{\ln\big(1/(1-${S("C")})\big)}{${S("RHB")}}`,
+  words:`If the true rate were exactly ${W("RHB","the limit")}, the chance of zero events in ${W("tau","τ hours")} is e^(−Rτ). Make that 5 % and solve for τ.`,
+  ex:R_`${S("tau")}=\frac{3.0}{5.0\cdot10^{-7}}=6.0\cdot10^{6}\ \text{h}\approx 8.2\ \text{years at } 2000\ \text{h/day}`,
+  who:["Safety lead","Concept phase"],
+  ev:"6.0·10⁶ h ≈ 8 years",exT:"100 robotaxis × 20 h a day = 2,000 h a day. One hazardous behaviour or one software release resets the clock. No efficiency method fully removes the need for field data (Betschinske et al. 2025), but decomposition and simulation reduce it.",step:"s04",
+  why:"This is why validation is split into exposure from driving and failure probability from simulation."},
+ {id:"stop",z:"req",x:1960,y:150,t:"Evaluation of SOTIF achievement",q:"Has the SOTIF been achieved?",
+  card:R_`\sum_k ${S("lamU")}${S("pU")}+${S("lnewU")}${S("pnew")}\le ${S("RHB")}`,
+  big:R_`\sum_{k} ${S("lamU")}\,${S("pU")} \;+\; ${S("lnewU")}\,${S("pnew")} \;\le\; ${S("RHB")}`,
+  words:`Replace every unknown by its ${W("lamU","pessimistic")} ${W("pU","bound")}. If the sum still fits under the ${W("RHB","tolerable rate")}, the criterion is shown.`,
+  ex:R_`3.59+0.46+0.28+0.25=4.57\ (\times10^{-7})\;\le\;5.0\cdot10^{-7}\ \checkmark`,
+  who:["Safety lead, reviewed by the assessor","Verdict phase"],
+  ev:"4.57·10⁻⁷ ≤ 5·10⁻⁷ ✓ (91 % of the limit)",exT:"Fresh data from 20,000 fleet hours, zero failures in 9.1 million runs, all 240 targeted cases passed: release recommended (Cl. 12.4). One failure in LS-1 would give 6.06·10⁻⁷: not shown.",step:"s10",
+  why:"This closes the loop: evidence plus inference make a claim about the unknown rate R, which is compared with the requirement.",
+  assume:"All eight bounds must hold together, so each is computed at C_b = 99.375 % (Bonferroni).",
+  chart:"stop"},
+ {id:"budget",z:"req",x:400,y:400,t:"Reserve and budget",q:"How much is left for known situations?",
+  card:R_`\sum_k ${S("b")} + ${S("bu")} \le ${S("RHB")}`,
+  big:R_`\sum_{k=1}^{${S("K")}} ${S("b")} \;+\; ${S("bu")} \;\le\; ${S("RHB")},\qquad ${S("B")}=${S("RHB")}-${S("bu")}`,
+  words:`Take a ${W("bu","reserve")} off the top for what you have not found. The rest, ${W("B","B")}, is shared among the known logical scenarios.`,
+  ex:R_`${S("bu")}=0.1\cdot ${S("RHB")}=5\cdot10^{-8},\quad ${S("B")}=4.5\cdot 10^{-7}\ \text{h}^{-1}`,
+  who:["Safety lead","Plan phase"],
+  ev:"B = 4.5·10⁻⁷, reserve 5·10⁻⁸",exT:"10 % reserve, as in course note 08 and ISO 21448 Clause 11.",step:"s07",
+  why:"It turns one impossible test into several smaller, separately testable claims, and keeps room for area 3."},
+ {id:"human",z:"req",x:720,y:400,t:"Human baseline cap",q:"Is any situation worse than humans?",
+  card:R_`${S("b")}\le ${S("h")}`,
+  big:R_`${S("b")}\;\le\;${S("h")}\qquad\text{for every } k`,
+  words:`No ${W("b","share")} may exceed the ${W("h","human level")} in that same logical scenario.`,
+  ex:R_`${S("h")}=2.5,\ 1.75,\ 0.75\ (\times10^{-6});\quad ${S("b")}=3.70,\ 0.50,\ 0.31\ (\times10^{-7})`,
+  who:["Safety lead","Plan phase"],
+  ev:"No cap binds",exT:"All three shares are far below the human level, which is typical with a factor-10 margin. A binding cap would be clamped and the rest re-allocated.",step:"s07",
+  why:"Without it, a good total could hide a situation (say night) where the robotaxi is worse than humans."},
+ {id:"alloc",z:"req",x:1040,y:400,t:"Budget per logical scenario",q:"How much risk may each logical scenario carry?",
+  card:R_`${S("b")}=${S("B")}\,\dfrac{${S("lamU")}}{\sum_j\lambda_j^{U}}`,
+  big:R_`${S("b")}=${S("B")}\,\frac{${S("lamU")}}{\sum_j \lambda_j^{U}}\quad\Longrightarrow\quad ${S("pstar")}=\frac{${S("B")}}{\sum_j\lambda_j^{U}}\ \ \text{for every }k`,
+  words:`Each logical scenario holds a share ${W("b","b_k")} of the budget ${W("B","B")}. The share follows a safety principle, equal protection per encounter: every exposed pedestrian gets the same ${W("pstar","allowed failure probability")}, so each share follows the scenario's ${W("lamU","exposure")}.`,
+  ex:R_`${S("b")}:\ 82.1,\ 11.0,\ 6.8\ \%\ \text{of } ${S("B")};\ \ ${S("pstar")}=8.88\cdot10^{-8}`,
+  who:["Safety lead, approved by the assessor","End of pilot, then frozen"],
+  ev:"Equal protection: 1 in 11.3 M per encounter",exT:"For comparison: proportional to human risk gives 1 in 18.5 M / 3.5 M / 5.1 M (protection ratio 5.2); an equal split 1 in 27.7 M / 3.7 M / 2.3 M (ratio 12).",step:"s07",
+  why:"The split decides how much risk each group of road users carries, and through it the validation targets. A split driven by test cost or effort would accept more risk exactly where testing is harder, so cost is not an input.",
+  assume:"Equal protection assumes one harm chain for the whole hazardous event. If impact speed differs between logical scenarios, equalise the harm probability per encounter instead (Putze et al. 2023).",
+  chart:"rules"},
+ {id:"pstar",z:"req",x:1360,y:400,t:"Allowed failure rate",q:"How reliable per encounter?",
+  card:R_`${S("pstar")}=\dfrac{${S("b")}}{${S("lamU")}}`,
+  big:R_`${S("pstar")}=\frac{${S("b")}}{${S("lamU")}}`,
+  words:`If the situation happens at most ${W("lamU","λᵁ times per hour")} and may contribute at most ${W("b","b per hour")}, the car may fail in at most a fraction ${W("pstar","p*")} of encounters.`,
+  ex:R_`${S("pstar")}=\frac{3.07\cdot10^{-8}}{0.346}=8.88\cdot10^{-8}\ \ (\text{LS-3; the same for LS-1 and LS-2})`,
+  who:["Safety lead","Plan phase"],
+  ev:"1 in 11.3 M encounters, every LS",exT:"Equal protection: the robotaxi may fail in at most 1 of 11.3 million encounters in every logical scenario.",step:"s07",
+  why:"Where the world (exposure) meets the system (testing): a per-hour budget becomes a per-encounter test requirement."},
+ {id:"freeze",z:"req",x:1680,y:400,t:"Frozen V&V plan",q:"What is fixed before confirming?",
+  card:R_`${S("n")}=\dfrac{${S("L")}\,${S("wmax")}}{${S("pstar")}}`,
+  big:R_`${S("n")}=\frac{${S("L")}\,${S("wmax")}}{${S("pstar")}},\qquad ${S("L")}=\ln\frac{1}{1-${S("Cb")}}`,
+  words:`Shares, run counts, driving hours and the simulator margin are written into the plan and approved before any confirmatory data exists.`,
+  ex:R_`${S("n")}=0.57,\ 2.86,\ 5.71\ (\times10^{6})\ \text{runs};\ \ 240\ \text{targeted cases};\ \ ${S("tau")}=20\,000\ \text{h};\ \ ${S("delta")}=1.17\ \text{m}`,
+  who:["Safety lead, approved by the assessor","Month 4"],
+  ev:"9.1·10⁶ runs, 240 cases, 20,000 h, δ = 1.17 m",exT:"These are the validation targets, the work product of Clause 9. ISO 21448 allows several of them for one acceptance criterion (3.33, Note 3).",step:"s07",
+  why:"If budget moved after seeing which types passed, the 95 % would no longer mean anything.",
+  assume:"Shares are fixed before the confirmatory campaign and may only move between campaigns, with fresh evidence (Werling et al. 2025, Remark 3.7). All confirmatory evidence must come from one frozen release."},
+ /* Risk */
+ {id:"R",z:"risk",x:870,y:700,risk:true,t:"Hazardous-behaviour rate",q:"The one number you never see",
+  card:R_`${S("R")}=\sum_k ${S("lam")}\,${S("p")}`,
+  big:R_`${S("R")}\;=\;\sum_{k} ${S("lam")}\cdot ${S("p")}`,
+  words:`${W("lam","How often a situation happens")} times ${W("p","how often the car fails when it does")}, summed over logical scenarios.`,
+  ex:R_`${S("R")}=4.0\,p_1+0.5\,p_2+0.3\,p_3\ \ \text{per hour}`,
+  ev:"Bounded at 4.57·10⁻⁷ /h",exT:"Three logical scenarios: pedestrian in clear view, pedestrian emerging from behind a vehicle, robotaxi turning onto the crossing; plus unknown situations.",step:"s05",
+  why:"The backbone of the map. The left factor belongs to the world and needs road data. The right factor belongs to the car and needs tests. That is why the canvas splits left and right below this card."},
+ /* World */
+ {id:"types",z:"world",x:230,y:990,t:"Logical scenarios",q:"Which logical scenarios share the budget?",
+  card:R_`k=1,\dots,${S("K")}`,
+  big:R_`\text{hazardous event}\;\to\;\text{logical scenarios } k=1,\dots,${S("K")}\quad(\text{MECE; one budget and one validation target each})`,
+  words:"Derive logical scenarios from the hazardous event: scenario structures with parameter ranges that do not overlap and together cover the event. Each holds one share of the budget and gets one validation target. Light, weather and pedestrian size are parameters inside them, not separate scenarios.",
+  who:["Scenario team with the safety lead","Pilot phase"],
+  ev:"LS-1 clear view · LS-2 emerging · LS-3 turning",exT:"Encounter shares 82 %, 11 %, 7 %. Occlusion defines LS-2 because the occluding vehicle is an extra actor; turning defines LS-3 because the geometry differs.",step:"s07",
+  why:"The logical scenario is the unit of the budget, of exposure counting and of the validation target.",
+  assume:"If the logical scenarios overlap or miss cases, the sum in the evaluation is wrong."},
+ {id:"lam",z:"world",x:560,y:990,t:"Exposure",q:"How often does it happen?",
+  card:R_`${S("lam")}\ \text{per hour}`,
+  big:R_`${S("lamU")}=\frac{${S("chi")}\big(2${S("N")}+2\big)}{2\,${S("tau")}}`,
+  words:`${W("lam","Encounters per hour")} with logical scenario k, bounded from above by counting ${W("N","N encounters")} in ${W("tau","τ hours")}. The bound is the largest rate under which seeing so few would still be plausible.`,
+  ex:R_`${S("lamU")}=4.16,\ 0.559,\ 0.346\ \text{h}^{-1}\ \ (\text{pilot, }1000\ \text{h})`,
+  who:["Data and ODD team","Pilot and confirmatory phases"],
+  ev:"λ = 4.0 / 0.5 / 0.3 per hour",exT:"Pilot counts 4,000 / 500 / 300 in 1,000 h. Confirmatory 80,000 / 10,000 / 6,000 in 20,000 h gives tighter bounds 4.04 / 0.513 / 0.310.",step:"s05",
+  why:"Only reality decides how often things happen. Simulation cannot produce this number.",
+  assume:"Exposure depends on route and ODD, so it is not a property of the world alone (Putze et al. 2023, Sec. IV-B)."},
+ {id:"tc",z:"world",x:890,y:990,t:"Triggering conditions",q:"Which conditions make it fail?",
+  card:R_`${S("p")}=\sum_c ${S("pi")}\,${S("pkc")}`,
+  big:R_`${S("p")}=\sum_c ${S("pi")}\;${S("pkc")}\qquad(c:\ \text{regions of the parameter space of logical scenario } k)`,
+  words:`A triggering condition (low light, wet road, a child, a short time to arrival) activates a functional insufficiency. Inside a logical scenario it is a region of the parameter space with its own ${W("pi","share")} and ${W("pkc","failure rate")}.`,
+  who:["Safety lead with perception and planning teams","Concept and pilot phases"],
+  ev:"Occlusion, low light, wet, child, short TTA",exT:"TC-1 occlusion defines LS-2. TC-2 to TC-4 apply to all logical scenarios; TC-5 (≤ 1.5 s at ≥ 40 km/h) to LS-1 and LS-2.",step:"s06",
+  why:"They steer the targeted cases (Cl. 10) and the importance sampling (Cl. 11) but hold no budget of their own, so risk is not double-counted.",
+  assume:"The list is never complete; missing conditions fall into the reserve.",
+  chart:"is"},
+ {id:"dens",z:"world",x:230,y:1210,t:"Variant density",q:"Which variants are common?",
+  card:R_`${S("x")}\sim ${S("px")}`,
+  big:R_`${S("x")}\sim ${S("px")},\qquad \int ${S("px")}\,d${S("x")}=1`,
+  words:`Within one type, ${W("x","concrete variants")} are not equally common. ${W("px","The density")} says how often each occurs on real roads.`,
+  who:["Data and ODD team","Pilot phase"],
+  ev:"Per LS: speeds, timing, light, road, size",exT:"Fitted from the 1,000 pilot hours, with a copula for dependent parameters (course lesson 3).",step:"s06",
+  why:"It weights the failure map. A failure in a variant that almost never happens should count little.",
+  assume:"The tails, where dangerous variants live, are where field data is thinnest."},
+ {id:"unk",z:"world",x:560,y:1210,t:"Unknown situations",q:"What have we not seen yet?",
+  card:R_`${S("lnew")}\,${S("pnew")}\le ${S("bu")}`,
+  big:R_`${S("lnewU")}\cdot ${S("pnew")}\;\le\;${S("bu")}`,
+  words:`Uncatalogued situations happen at ${W("lnew","some rate")}. The ${W("pnew","failure probability there")} cannot be tested, only argued from design.`,
+  ex:R_`2.5\cdot10^{-4}\times 1.0\cdot10^{-4}=2.5\cdot10^{-8}\;\le\;5\cdot10^{-8}`,
+  who:["Safety lead with the data team","Verdict phase"],
+  ev:"2.5·10⁻⁸ ≤ reserve 5·10⁻⁸",exT:"p_new ≤ 10⁻⁴ is argued from the functional restriction of Clause 8: any unclassified object within 3 m of a crosswalk caps speed at 10 km/h, and the restriction is tested on its own.",step:"s10",
+  why:"Every other bound assumes the catalogue is complete. This term is the price of that assumption: SOTIF area 3 as a number."},
+ /* System */
+ {id:"p",z:"sys",x:1240,y:990,t:"Failure probability",q:"How often does it fail when it happens?",
+  card:R_`${S("p")}=\int ${S("px")}\,${S("f")}\,d${S("x")}`,
+  big:R_`${S("p")}=\int ${S("px")}\;${S("f")}\;d${S("x")}`,
+  words:`Average the ${W("f","failure map")} over all variants, each weighted by ${W("px","how common it is")}. The result is the ${W("p","chance of failing in one encounter")}.`,
+  ex:R_`${S("pU")}=8.88\cdot10^{-8}\ \ \text{in every logical scenario}`,
+  who:["Simulation team","Confirmatory phase"],
+  ev:"pᵁ = 8.88·10⁻⁸ in every LS",exT:"Upper bounds after zero failures in 0.57 M, 2.86 M and 5.71 M runs.",step:"s10",
+  why:"The bridge between world and system. Most of the test effort exists to bound this one integral."},
+ {id:"fmap",z:"sys",x:1560,y:990,t:"Failure map",q:"Where exactly does it fail?",
+  card:R_`${S("f")}\in\{0,1\}`,
+  big:R_`${S("f")}=\begin{cases}1 & ${S("ys")}< ${S("yc")}+${S("delta")}\\ 0 & \text{otherwise}\end{cases}`,
+  words:`For every concrete variant ${W("x","x")}, the car either fails or passes. It belongs to the software release, not to the world.`,
+  who:["Simulation team","Pilot and confirmatory phases"],
+  ev:"Fails if clearance < 1.17 m in sim",exT:"Metric: distance between robotaxi and pedestrian when the pedestrian reaches the conflict zone. Contact is a failure; in simulation the margin δ is added.",step:"s08",
+  why:"This is what testing actually probes, one point at a time.",
+  assume:"A new release changes f. Evidence from an earlier release needs its own carry-over argument."},
+ {id:"odd",z:"sys",x:1240,y:1210,t:"ODD exit",q:"What if conditions leave the ODD?",
+  card:R_`${S("lam")}\,${S("pc")}\,${S("Pmiss")}`,
+  big:R_`${S("lam")}\cdot ${S("pc")}\cdot ${S("Pmiss")}\cdot 1`,
+  words:`Hazards you cannot mitigate are excluded from the ODD. Risk remains only when the car ${W("Pmiss","does not notice")} it has left.`,
+  ev:"Not in the minimal example",exT:"Heavy snow would be outside the ODD. A full case would add this term for it.",step:"s01",
+  why:"It turns an untestable hazard (SOTIF area 2) into a testable detection problem."},
+ /* Scenarios and test cases */
+ {id:"sc_log",z:"scen",x:-660,y:990,t:"Scenario parameters",q:"What varies inside a logical scenario?",
+  card:R_`${S("x")}\in\mathcal X_k`,
+  big:R_`\text{logical: } ${S("x")}=(v_{\text{ego}},v_{\text{ped}},t_{\text{arr}},\text{light},\text{road},\text{size},\dots)\in\mathcal X_k\;\to\;\text{concrete: one value each}`,
+  words:`Each logical scenario has parameters with ranges. Fixing every ${W("x","parameter")} gives one concrete scenario, one test case. Triggering conditions are regions of this space.`,
+  who:["Scenario team with the safety lead","Pilot phase"],
+  ev:"6–8 parameters per logical scenario",exT:"LS-1: ego speed 20–50 km/h, pedestrian speed 0.8–2.5 m/s, time to arrival 0.5–5 s, light, road, pedestrian size. LS-2 adds occluder type and lateral gap; LS-3 turning speed 10–30 km/h and pedestrian position.",step:"s07",
+  why:"The parameter space is where the variant density, the failure map and the test density all live.",
+  assume:"How you parameterise changes the results (de Gelder & Op den Camp 2024)."},
+ {id:"sc_tc",z:"scen",x:-360,y:990,t:"Triggering-condition infusion",q:"Does the car handle the known weak spots?",
+  card:R_`\mathcal X_{\text{TC}}\subset\mathcal X`,
+  big:R_`\text{pass}\iff ${S("ys")}(${S("x")}_j)\ge ${S("yc")}+${S("delta")}\quad\text{for every targeted case } ${S("x")}_j\in\mathcal X_{\text{TC}}`,
+  words:"Add the known triggering conditions on purpose, alone and in combination, and require every case to pass. This verifies known hazardous scenarios (SOTIF area 2).",
+  ex:R_`48+144+48=240\ \text{cases, all pass}`,
+  who:["Simulation and proving-ground teams","Pilot phase and before every release"],
+  ev:"240 targeted cases",exT:"Light (3) × road (2) × pedestrian (2) × 4 approach speeds = 48 per logical scenario; LS-2 also × 3 occluders = 144. All must clear 1.17 m.",step:"s05s",
+  why:"It shows the car copes with each known trigger. It gives no rate, because the cases are chosen, not sampled.",
+  assume:"Passing every targeted case says nothing about how often the car fails."},
+ {id:"sc_crit",z:"scen",x:-660,y:1210,t:"Critical parameter search",q:"Where does it nearly fail?",
+  card:R_`\arg\min_{${S("x")}}\ ${S("ys")}(${S("x")})`,
+  big:R_`${S("x")}^{*}=\arg\min_{${S("x")}\in\mathcal X}\ ${S("ys")}(${S("x")}),\qquad \partial F=\{${S("x")}:\ ${S("ys")}(${S("x")})=${S("yc")}+${S("delta")}\}`,
+  words:`An optimiser or adaptive sampler searches the parameters for the smallest clearance and maps the failure boundary. It finds weak spots nobody listed and tells the statistical tests (${W("q","q")}) where to concentrate.`,
+  who:["Simulation team","Pilot phase"],
+  ev:"Boundary: night, ≥ 40 km/h, arrival ≤ 1.5 s",exT:"The pilot search found the closest calls at night, with approach speeds of 40 km/h and more and pedestrians reaching the conflict zone within 1.5 s. Wet roads made it worse, which added wet-road reflections to the trigger list.",step:"s05s",
+  why:"It turns unknown hazardous scenarios into known ones (area 3 → area 2) and designs the importance-sampling density.",
+  assume:"Search results are not a risk estimate: they over-represent dangerous cases on purpose and carry no weights."},
+ {id:"sc_cat",z:"scen",x:-360,y:1210,t:"Test catalogue",q:"Which test answers which question?",
+  card:R_`\text{verify}\ \ |\ \ \text{estimate}`,
+  big:R_`\text{verification: } f(${S("x")}_j)=0\ \ \forall j\qquad\text{validation: } \hat p_k=\frac{1}{${S("n")}}\sum_i f(${S("x")}_i)\,${S("w","w(x_i)")}`,
+  words:"Targeted cases verify that known weak spots are handled (pass/fail). Sampled cases with weights estimate how often the car fails, which is what the risk budget needs.",
+  who:["Safety lead with the simulation team","Plan phase"],
+  ev:"240 targeted + 9.1 M sampled + 180 pairs",exT:"Targeted cases for area 2 (Clause 10), millions of weighted samples for the rate (Clause 11), and paired real and simulated runs chosen near the failure boundary.",step:"s05s",
+  why:"Mixing the two up is a common error: counting critical runs from a search is not a risk estimate.",
+  assume:"Every sampled case needs a known weight, otherwise it cannot enter the failure bound."},
+ /* Evidence */
+ {id:"drv",z:"evi",x:230,y:1540,t:"Field driving",q:"How do we count situations?",
+  card:R_`${S("N")}\ \text{in}\ ${S("tau")}\ \text{hours}`,
+  big:R_`P\!\left(X\le ${S("N")}\mid ${S("lamU")}${S("tau")}\right)=1-${S("Cb")}\;\;\Longleftrightarrow\;\; ${S("lamU")}=\frac{${S("chi")}(2${S("N")}+2)}{2\,${S("tau")}}`,
+  words:`Count ${W("N","N encounters")} in ${W("tau","τ hours")}. The ${W("lamU","upper bound")} is the highest rate at which so few events would still be plausible.`,
+  ex:R_`${S("N")}=300,\ ${S("tau")}=1000\ \text{h}:\quad ${S("lamU")}=0.346\ \text{h}^{-1}`,
+  who:["Data and ODD team","Pilot (1,000 h) and confirmatory (20,000 h)"],
+  ev:"1,000 h pilot + 20,000 h confirmatory",exT:"Auto-labelled fleet logs. One hour of driving counts all three logical scenarios at once.",step:"s05",
+  why:"You only need to see situations happen, not the car fail. That is why 21,000 hours replace 6 million.",
+  chart:"poisson"},
+ {id:"disc",z:"evi",x:560,y:1540,t:"Discovery log",q:"Is the catalogue complete?",
+  card:R_`${S("lnewU")}=${S("L")}/${S("tau")}`,
+  big:R_`${S("lnewU")}=\frac{${S("L")}}{${S("tau")}},\qquad P(\text{next is new})\approx\frac{${S("N1")}}{${S("Nt")}}`,
+  words:`If ${W("tau","τ hours")} brought no new kind of situation, new kinds cannot be frequent. Types seen ${W("N1","only once")} hint at more unseen ones (Good–Turing).`,
+  ex:R_`${S("lnewU")}=\frac{5.08}{20\,000}=2.5\cdot10^{-4}\ \text{h}^{-1}`,
+  who:["Data and ODD team","Confirmatory phase, then in service"],
+  ev:"No new type in 20,000 h",exT:"Every encounter was mapped to one of the three types. Any unexplained hazardous behaviour would count against the reserve.",step:"s10",
+  why:"The only statistical evidence about completeness.",
+  chart:"disc"},
+ {id:"pilot",z:"evi",x:890,y:1540,t:"Pilot scenario exploration",q:"How much does one simulation run count?",
+  card:R_`${S("wmax")}=\max\dfrac{${S("px")}}{${S("q")}}`,
+  big:R_`${S("wmax")}=\max_{x:\,f(x)=1}\frac{${S("px")}}{${S("q")}}`,
+  words:`Exploratory runs find where the car nearly fails and set the test density ${W("q","q")}. The ${W("wmax","importance factor")} says how much one run counts compared with one real encounter. It decides how many runs are needed, not how much risk is allowed.`,
+  ex:R_`${S("wmax")}=0.01,\ 0.05,\ 0.10\quad(\text{LS-1, LS-2, LS-3})`,
+  who:["Simulation team","Months 1–3"],
+  ev:"w = 0.01 / 0.05 / 0.10",exT:"Clear-view scenes are well understood, occlusion less so, turning least. Turning therefore needs the most runs: because it is hardest to test, not because it may carry more risk.",step:"s07",
+  why:"It turns the allowed failure probability into a run count. Keeping it out of the budget split keeps test difficulty from setting the risk level.",
+  assume:"Runs must be independent concrete scenarios, not frames or slices of one scene (Patel & Jung 2026)."},
+ {id:"q",z:"evi",x:1240,y:1540,t:"Test density",q:"Where do we test?",
+  card:R_`${S("w")}=\dfrac{${S("px")}}{${S("q")}}`,
+  big:R_`${S("w")}=\frac{${S("px")}}{${S("q")}},\qquad \hat p_k=\frac{1}{${S("n")}}\sum_{i=1}^{${S("n")}} f(x_i)\,${S("w","w(x_i)")}`,
+  words:`Test dangerous variants more often than reality presents them, using ${W("q","your own density q")}. Each result is down-weighted by ${W("w","w")} so the estimate stays unbiased.`,
+  ex:R_`\text{night: } ${S("wmax")}=0.1\;\Rightarrow\;\text{one run counts like 10 real encounters}`,
+  who:["Simulation team","End of pilot"],
+  ev:"w = 0.01 / 0.05 / 0.10",exT:"Over-weighted: fast approach, late detection, wet road. A 10 % share of runs still follows reality so no region is left untested.",step:"s06",
+  why:"Importance sampling: runs land where failures are possible, so each carries more information.",
+  assume:"q must never be thinner than p_k anywhere f could be 1, otherwise the weights explode.",
+  chart:"is"},
+ {id:"sim",z:"evi",x:1560,y:1540,t:"Simulation runs",q:"What do n passed runs prove?",
+  card:R_`${S("pU")}=\dfrac{${S("L")}\,${S("wmax")}}{${S("n")}}`,
+  big:R_`${S("pU")}=\frac{${S("L")}\,${S("wmax")}}{${S("n")}}+${S("Phi")}(-${S("z")})`,
+  words:`If the car really failed with ${W("p","probability p")}, all ${W("n","n runs")} passing would be unlikely. Once that chance drops below 1 − ${W("Cb","C_b")}, p is ruled out.`,
+  ex:R_`\text{LS-3: } \frac{5.08\cdot 0.1}{5.71\cdot10^{6}}=8.88\cdot10^{-8}=${S("pstar")}`,
+  who:["Simulation team","Months 5–9"],
+  ev:"9.1·10⁶ runs, 0 failures",exT:"Planner in the loop with statistically modelled perception errors, on the frozen release. One failure in LS-1 multiplies its bound by 1.41 and fails the evaluation; LS-2 and LS-3 tolerate 2 and 4.",step:"s10",
+  why:"The only practical way to reach millions of encounters. Worth nothing without the margin from paired runs.",
+  chart:"zerofail"},
+ {id:"ops",z:"evi",x:560,y:1750,t:"Field monitoring",q:"Does the fleet keep confirming the claim?",
+  card:R_`E(t)\ge \dfrac{1}{1-${S("C")}}`,
+  big:R_`E(t)=\Big(\frac{\lambda_1}{${S("RHB")}}\Big)^{k(t)}e^{-(\lambda_1-${S("RHB")})\,t},\quad \lambda_1=2\,${S("RHB")},\quad\text{alarm at } E(t)\ge\frac{1}{1-${S("C")}}=20`,
+  words:`After release the fleet keeps counting the behaviour. A likelihood-ratio e-process compares the limit ${W("RHB","R_HB")} with twice the limit and raises an alarm when the evidence ratio reaches 20. It stays valid however often it is checked.`,
+  ex:R_`0.365\ \text{events per year at the limit};\ \ \text{alarm at } k=5\ (1\ \text{yr}),\ 6\ (2\ \text{yr}),\ 7\ (5\ \text{yr})`,
+  who:["Field monitoring team with the safety lead","Operation"],
+  ev:"Alarm at 5 events in year one",exT:"730,000 fleet hours a year. A fixed one-year rule alarms at 3 events but is valid for one look per year only. A year without events bounds the rate only at 8× the limit: monitoring can show a violation, not confirm the criterion.",step:"s11",
+  why:"Clause 13 closes the loop: the release claim becomes a hypothesis the fleet keeps testing. Any field event that matches no listed triggering condition counts against the reserve and starts the issue process.",
+  assume:"Field events must be detected and attributed reliably; an undetected hazardous behaviour never enters the count.",
+  chart:"eproc"},
+ {id:"mon",z:"evi",x:1240,y:1750,t:"ODD-exit tests",q:"Does the car notice?",
+  card:R_`P_{\text{miss}}^{U}=${S("L")}/${S("nex")}`,
+  big:R_`${S("Pmiss","P_{\\text{miss}}^{U}")}=\frac{${S("L")}}{${S("nex")}}`,
+  words:`Zero missed exits in ${W("nex","n runs")} bounds the ${W("Pmiss","miss probability")} by the same zero-failure rule.`,
+  ev:"Not in the minimal example",exT:"Would be needed once heavy snow or sensor degradation is excluded from the ODD.",step:"s01",
+  why:"Supplies the one number the ODD-exit term needs."},
+ {id:"pair",z:"evi",x:1560,y:1750,t:"Paired sim/real runs",q:"Can we trust the simulator?",
+  card:R_`${S("delta")}=${S("mu")}+${S("z")}\,${S("sig")}`,
+  big:R_`${S("e")}=${S("ys")}-${S("yr")},\qquad \text{pass}\iff ${S("ys")}\ge ${S("yc")}+${S("delta")},\qquad ${S("delta")}=${S("mu")}+${S("z")}\,${S("sig")}`,
+  words:`Run the same scenario in simulation and on the proving ground. A simulated pass only counts if it clears contact by more than the ${W("e","simulator error")} could plausibly be.`,
+  ex:R_`0.05+6.5\cdot 0.17=1.17\ \text{m},\qquad ${S("Phi")}(-6.5)=4\cdot10^{-11}`,
+  who:["Proving-ground and simulation teams","Before the freeze"],
+  ev:"180 pairs → δ = 1.17 m",exT:"60 pairs per logical scenario with a pedestrian dummy target. z = 6.5 so that Φ(−z) is 0.05 % of the allowed p*.",step:"s08",
+  why:"Without this card, millions of simulation runs say nothing about the real car.",
+  assume:"A Gaussian tail at 6.5σ cannot be checked with 180 pairs. The weakest link of the whole argument.",
+  chart:"gauss"},
+ /* Inference */
+ {id:"freq",z:"inf",x:1960,y:990,t:"Frequentist inference",q:"What does “95 %” mean here?",
+  card:R_`P\big(${S("lamU")}\ge ${S("lam")}\big)\ge ${S("Cb")}`,
+  big:R_`P_{\text{data}}\big(${S("lamU")}\ge ${S("lam")}\big)\;\ge\;${S("Cb")}`,
+  words:`The true ${W("lam","rate")} is fixed; the data is random. The procedure produces a ${W("lamU","bound")} above the truth in at least ${W("Cb","C_b")} of repeated campaigns.`,
+  ev:"All 8 bounds at 99.375 %",exT:"Every bound in the example (exposure, failure, unknown, simulator spread) is of this kind.",step:"s05",
+  why:"Needs no prior and is what assessors expect.",
+  assume:"It never says “P(R ≤ target) = 95 %”, and it combines simulation and road data only through hard rules like the margin δ."},
+ {id:"bayes",z:"inf",x:1960,y:1210,t:"Bayesian inference",q:"What if we use prior knowledge?",
+  card:R_`P(${S("lam")}\le x\mid \text{data})`,
+  big:R_`P\big(${S("lam")}\le x\mid ${S("tau")},\,N{=}0\big)=1-e^{-x${S("tau")}}\;\ge\;${S("C")}\;\Rightarrow\;${S("tau")}=\frac{\ln 20}{x}`,
+  words:`The ${W("lam","rate")} is uncertain; the data is fixed. With a flat prior and zero events you get the same ${W("tau","3/x hours")} as the frequentist bound.`,
+  ev:"Not used; would credit the last release",exT:"A prior from the previous software release or from simulation would shorten the campaign, and that prior is what you would then have to defend.",step:"s04",
+  why:"Both schools agree when you know nothing. They differ exactly where you add knowledge.",
+  chart:"post"},
+ {id:"bonf",z:"inf",x:1960,y:1430,t:"Bonferroni correction",q:"Do all bounds hold at once?",
+  card:R_`${S("Cb")}=1-\dfrac{1-${S("C")}}{${S("m")}}`,
+  big:R_`${S("Cb")}=1-\frac{1-${S("C")}}{${S("m")}}\;\Rightarrow\;\text{all } ${S("m")}\text{ bounds hold with}\ \ge ${S("C")}`,
+  words:`The verdict uses ${W("m","m bounds")}. Making each one stricter keeps the joint claim at ${W("C","95 %")}. The rule-of-three factor 3 grows to ${W("L","L")}.`,
+  ex:R_`${S("m")}=8:\ \ ${S("Cb")}=99.375\,\%,\quad ${S("L")}=\ln 160=5.08`,
+  ev:"8 bounds → L = 5.08 instead of 3",exT:"3 exposure, 3 failure, 1 unknown-situation and 1 simulator-spread bound.",step:"s05",
+  why:"Conservative, but simple and easy to defend. The cost grows only logarithmically with m.",
+  chart:"bonf"},
+ /* Mathematical foundations */
+ {id:"m_chain",z:"math",x:80,y:2110,t:"Chain rule",q:"How do conditional chances multiply?",
+  card:R_`P(A\cap B)=P(A)\,P(B\mid A)`,
+  big:R_`P(A\cap B\cap C)=P(A)\;P(B\mid A)\;P(C\mid A,B)`,
+  words:"The chance that several things all happen is the chance of the first, times the chance of the second given the first, and so on. Nothing is assumed.",
+  ex:R_`${S("AH")}=${S("RHB")}\cdot P(E\mid HB)\,P(\bar C\mid E,HB)\,P(S\mid \bar C,E,HB)`,
+  ev:"5·10⁻⁷ × 0.5 × 0.5 × 0.8 = 10⁻⁷",exT:"Annex C writes the shortened conditions P(C̄ | E) and P(S | C̄). Dropping the earlier events is an independence assumption.",step:"s03",
+  why:"Annex C is exactly this rule applied to harm. Knowing the full form shows which independence you are assuming."},
+ {id:"m_thin",z:"math",x:370,y:2110,t:"Thinning a Poisson process",q:"Why can rates be multiplied by probabilities?",
+  card:R_`\text{rate }\lambda,\ \text{keep w.p. } p\;\Rightarrow\;\lambda p`,
+  big:R_`N(t)\sim\text{Poisson}(\lambda t),\ \text{each event kept w.p. } p\;\Rightarrow\;N_{\text{kept}}(t)\sim\text{Poisson}(\lambda p\,t)`,
+  words:"If encounters arrive at random at rate λ and each one independently leads to a failure with probability p, failures arrive at random at rate λ·p.",
+  ex:R_`0.346\ \text{h}^{-1}\times 8.88\cdot10^{-8}=3.07\cdot10^{-8}\ \text{h}^{-1}\ \ (\text{LS-3})`,
+  ev:"LS-3: 0.346 × 8.88·10⁻⁸",exT:"This is why R = Σ λ·p, why p* = b/λ, and why R_HB times the chain gives A_H.",step:"s05",
+  why:"It makes behaviour rates, encounter rates and per-encounter probabilities fit together. It needs encounters to be independent."},
+ {id:"m_total",z:"math",x:660,y:2110,t:"Law of total probability",q:"How do sub-cases add up?",
+  card:R_`P(F)=\sum_c P(c)\,P(F\mid c)`,
+  big:R_`P(F)=\sum_c P(c)\;P(F\mid c)\qquad (c\ \text{MECE})`,
+  words:"Split all cases into groups that do not overlap and cover everything. The overall chance is the weighted average of the chances within each group.",
+  ex:R_`R=4.0\,p_1+0.5\,p_2+0.3\,p_3`,
+  ev:"83 % · 10 % · 6 % of encounters",exT:"Logical scenarios, and triggering-condition regions inside them, are this law. If the groups overlap or leave gaps, the sum is wrong.",step:"s05",
+  why:"Justifies splitting into logical scenarios and requires them to be MECE.",
+  chart:"strata"},
+ {id:"m_expect",z:"math",x:950,y:2110,t:"Expectation over a density",q:"What is an average over infinitely many variants?",
+  card:R_`E[f(X)]=\int p(x)\,f(x)\,dx`,
+  big:R_`E_{p}[f(X)]=\int p(x)\,f(x)\,dx`,
+  words:"Weight each value of f by how often its x occurs, and add up. For a 0/1 map this is the probability of landing where f = 1.",
+  ex:R_`${S("p")}=\int ${S("px")}\,${S("f")}\,d${S("x")}`,
+  ev:"p_night = average of the 0/1 map",exT:"Over walking speed, approach speed and detection distance, weighted by how often each occurs at night.",step:"s06",
+  why:"The failure probability per encounter is exactly this expectation. Simulation estimates it."},
+ {id:"m_is",z:"math",x:1240,y:2110,t:"Change of measure",q:"How can biased testing give an unbiased answer?",
+  card:R_`E_p[f]=E_q\!\big[f\,\tfrac{p}{q}\big]`,
+  big:R_`E_p[f(X)]=\int q(x)\,\frac{p(x)}{q(x)}\,f(x)\,dx=E_q\!\left[f(X)\,\frac{p(X)}{q(X)}\right]`,
+  words:"Multiply and divide by q inside the integral. Sampling from q and weighting by p/q gives the same average as sampling from reality.",
+  ex:R_`${S("wmax")}=0.1:\ \ ${S("n")}=\frac{${S("L")}\,${S("wmax")}}{${S("pstar")}}=\frac{5.08\cdot0.1}{8.88\cdot10^{-8}}=5.71\cdot10^{6}`,
+  ev:"LS-3: 10× fewer runs",exT:"Without importance sampling LS-3 would need 57 million runs instead of 5.7 million.",step:"s06",
+  why:"The mathematical reason importance sampling is unbiased. It needs q > 0 wherever p·f > 0.",
+  chart:"is"},
+ {id:"m_binom",z:"math",x:1530,y:2110,t:"Bernoulli trials",q:"What do n passed runs rule out?",
+  card:R_`(1-p)^n\approx e^{-np}`,
+  big:R_`P(\text{all } n \text{ pass}\mid p)=(1-p)^{n}\approx e^{-np}\qquad (p\ll 1)`,
+  words:"Independent runs, each failing with probability p: the chance that none fails shrinks exponentially in n·p.",
+  ex:R_`e^{-5.71\cdot10^{7}\cdot 8.88\cdot10^{-8}}=e^{-5.08}=0.625\,\%=1-${S("Cb")}`,
+  ev:"Effective 5.7·10⁷ LS-3 encounters",exT:"5.7 million weighted runs count like 57 million real encounters (w = 0.1).",step:"s10",
+  why:"The basis of every zero-failure argument in simulation. It needs runs to be independent, not slices of one scene."},
+ {id:"m_union",z:"math",x:1820,y:2110,t:"Union bound",q:"How do many small risks add up?",
+  card:R_`P\big(\cup_i A_i\big)\le\sum_i P(A_i)`,
+  big:R_`P\Big(\bigcup_{i} A_i\Big)\;\le\;\sum_i P(A_i)`,
+  words:"The chance that at least one of several things happens is never more than the sum of their chances. Overlaps only make it smaller.",
+  ex:R_`8\times 0.625\,\%=5\,\%\;\Rightarrow\;\text{all 8 bounds hold with}\ \ge 95\,\%`,
+  ev:"Two uses: budgets and confidence",exT:"Behaviour paths that cause the same harm add up (Σ b_k + b_unk ≤ R_HB). Wrong bounds add up too (Bonferroni).",step:"s07",
+  why:"It never underestimates, so it is safe. It is conservative when the events overlap.",
+  chart:"bonf"},
+ {id:"m_bayes",z:"math",x:2110,y:2110,t:"Bayes' theorem",q:"How does data update a belief?",
+  card:R_`p(\lambda\mid D)\propto p(D\mid\lambda)\,p(\lambda)`,
+  big:R_`p(\lambda\mid D)=\frac{p(D\mid\lambda)\;p(\lambda)}{p(D)}`,
+  words:"Posterior belief = how well each rate explains the data × what you believed before, normalised.",
+  ex:R_`N=0,\ \text{flat prior}:\ p(\lambda\mid D)=\tau e^{-\lambda\tau},\ \ 95\,\%\ \text{at}\ \lambda=\tfrac{\ln 20}{\tau}`,
+  ev:"Gives the same 3/τ with a flat prior",exT:"With a prior from the previous release, fewer hours would be needed, and that prior would have to be defended.",step:"s04",
+  why:"The alternative to confidence bounds. The prior must be stated.",
+  chart:"post"},
+ {id:"m_pois",z:"math",x:230,y:2350,t:"Poisson process",q:"How are rare random events counted?",
+  card:R_`P(X=n)=\frac{(\lambda\tau)^n}{n!}e^{-\lambda\tau}`,
+  big:R_`P(X=n\mid\lambda\tau)=\frac{(\lambda\tau)^{n}}{n!}\,e^{-\lambda\tau}`,
+  words:"Events that happen independently at a constant average rate: the count in τ hours follows this distribution, with mean λτ.",
+  ex:R_`\text{LS-3}: \lambda\tau\approx 0.3\cdot 1000=300\ \text{expected},\ 300\ \text{counted}`,
+  ev:"Counts of crossings and of behaviours",exT:"Assumed for encounter counts, hazardous behaviours and ODD exits.",step:"s05",
+  why:"The model behind every per-hour rate. If the rate varies (rush hour, weather), stratify.",
+  chart:"poisson"},
+ {id:"m_zero",z:"math",x:520,y:2350,t:"Zero-failure bound",q:"Where does the 3 come from?",
+  card:R_`e^{-\lambda\tau}\le 1-C\Rightarrow \tau\ge\tfrac{\ln\frac{1}{1-C}}{\lambda}`,
+  big:R_`P(X=0)=e^{-\lambda\tau}\le 1-C\;\Rightarrow\;\lambda\tau\ge\ln\frac{1}{1-C},\qquad \ln 20=3.0,\ \ \ln 160=5.08`,
+  words:"If the rate were at the limit, seeing nothing for τ hours would be unlikely. Seeing nothing therefore rules the limit out.",
+  ex:R_`\frac{3.0}{5.0\cdot10^{-7}}=6.0\cdot10^{6}\ \text{h};\qquad \frac{5.08}{20\,000}=2.5\cdot10^{-4}\ \text{h}^{-1}`,
+  ev:"3 at 95 %, 5.08 at 99.375 %",exT:"Used for the naive target, for zero failures in simulation, for the discovery log and for ODD-exit tests.",step:"s04",
+  why:"The single most used result in SOTIF validation.",
+  chart:"zerofail"},
+ {id:"m_chi",z:"math",x:810,y:2350,t:"Poisson and χ²",q:"What if some events were seen?",
+  card:R_`m^{U}=\tfrac12\chi^2_{C}(2N+2)`,
+  big:R_`P(X\le N\mid m)=1-C\;\iff\;m^{U}=\tfrac12\,\chi^2_{C}(2N+2)`,
+  words:"One formula gives the upper bound on a Poisson mean after N events. With N = 0 it is the zero-failure bound.",
+  ex:R_`N=300:\ m^U=346\Rightarrow\lambda^U=0.346;\qquad j=1:\ \tfrac{7.18}{5.08}=1.41\times`,
+  ev:"One LS-1 failure → bound × 1.41",exT:"That is what turns the evaluation from 4.57·10⁻⁷ into 6.06·10⁻⁷.",step:"s10",
+  why:"Every exposure bound and every bound after observed failures uses it."},
+ {id:"m_gt",z:"math",x:1100,y:2350,t:"Good–Turing estimate",q:"How likely is something never seen?",
+  card:R_`P(\text{new})\approx N_1/N`,
+  big:R_`P(\text{next observation is a new type})\approx\frac{N_1}{N}`,
+  words:"The share of observations that were the only one of their kind estimates the chance that the next one is a kind never seen before.",
+  ex:R_`N_1=0\ \text{in}\ 20\,000\ \text{h}\;\Rightarrow\;\text{use the zero-failure bound }2.5\cdot10^{-4}`,
+  ev:"No singletons in the example",exT:"With singletons it would give a direct estimate of the unknown-situation rate.",step:"s10",
+  why:"The only statistics available for unknown situations (SOTIF area 3)."},
+ {id:"m_eproc",z:"math",x:1390,y:2350,t:"Anytime-valid monitoring",q:"How can you check every day without fooling yourself?",
+  card:R_`P\big(\sup_t E(t)\ge 1/\alpha\big)\le\alpha`,
+  big:R_`E(t)=\Big(\frac{\lambda_1}{\lambda_0}\Big)^{k(t)}e^{-(\lambda_1-\lambda_0)t},\qquad P_{\lambda_0}\Big(\sup_t E(t)\ge\tfrac{1}{\alpha}\Big)\le\alpha`,
+  words:"An e-process is a running evidence ratio. If the claim holds (rate at most λ₀), its expected value is at most 1, so by Ville's inequality it reaches 1/α with probability at most α, however often you look.",
+  ex:R_`\lambda_0=5\cdot10^{-7},\ \lambda_1=10^{-6},\ t=730\,000\ \text{h}:\ E(5)=2^{5}e^{-0.365}=22.2\ge 20`,
+  ev:"5 events in year one → E = 22",exT:"With 4 events E would be 11, below the alarm level of 20.",step:"s11",
+  why:"A fixed-sample test checked every month inflates its false-alarm rate. The e-process does not.",
+  chart:"eproc"},
+ {id:"m_norm",z:"math",x:1680,y:2350,t:"Normal tails",q:"How unlikely is a 6.5σ error?",
+  card:R_`\Phi(-z)`,
+  big:R_`\Phi(-z)=\int_{-\infty}^{-z}\frac{e^{-u^{2}/2}}{\sqrt{2\pi}}\,du,\qquad \sigma^{U}=\hat\sigma\sqrt{\frac{m-1}{\chi^2_{1-C_b}(m-1)}}`,
+  words:"The chance a normal error exceeds z standard deviations, and the upper bound on σ from m paired runs.",
+  ex:R_`\hat\sigma=0.15\ \text{m},\ m=180:\ \sigma^{U}=0.17\ \text{m};\quad \Phi(-6.5)=4\cdot10^{-11}`,
+  ev:"Φ(−6.5) = 4·10⁻¹¹",exT:"Chosen so the simulator's miss probability is 0.05 % of the allowed p*.",step:"s08",
+  why:"Sets the simulator margin. The weak spot: tails this far out are assumed, not measured.",
+  chart:"gauss"}
+];
+const E=[
+ ["hbdef","crit",R_`H`,"harm H"],["bench","crit",R_`\times 0.1\times 0.2`,"10⁻⁷"],["crit","hb",R_`\div\,${S("PE","P(E)")}${S("PC",R_`P(\bar C)`)}${S("PS","P(S)")}`,"÷ 0.2"],
+ ["hb","vt",R_`\ln 20/${S("RHB")}`,"6.0·10⁶ h"],["vt","R",R_`\text{split } R`,"too slow"],["hb","budget",S("RHB"),"5·10⁻⁷"],
+ ["budget","alloc",S("B"),"4.5·10⁻⁷"],["human","alloc",R_`\text{caps}`,"none binds"],["alloc","pstar",S("b"),"3.70 / 0.50 / 0.31 ·10⁻⁷"],
+ ["lam","pstar",S("lamU"),"4.16 / 0.56 / 0.35"],["pstar","freeze",S("pstar"),"1 in 11.3 M"],["pilot","freeze",S("wmax"),"w = 0.01 / 0.05 / 0.10"],["lam","alloc",S("lamU"),"82 / 11 / 7 %"],
+ ["budget","unk",S("bu"),"5·10⁻⁸"],["hb","stop",R_`\le ${S("RHB")}`,"≤ 5·10⁻⁷"],["R","stop",R_`${S("R")}^{U}`,"4.36·10⁻⁷"],
+ ["freeze","sim",R_`\text{plan}`,"9.1 M runs"],["freeze","drv",R_`${S("tau")}`,"20,000 h"],["pair","freeze",S("delta"),"1.17 m"],
+ ["R","lam",S("lam"),""],["R","p",S("p"),""],["unk","R",R_`+${S("lnew")}${S("pnew")}`,"2.5·10⁻⁸"],["odd","R",R_`+${S("lam")}${S("pc")}${S("Pmiss")}`,""],
+ ["types","lam",R_`k`,"3 logical scenarios"],["tc","sc_log",R_`\text{parameter regions}`,"light, wet, child"],
+ ["p","dens",S("px"),""],["p","fmap",S("f"),""],["p","tc",R_`\sum_c ${S("pi")}${S("pkc")}`,""],["tc","fmap",R_`\text{where } f{=}1`,""],
+ ["drv","lam",S("lamU"),"N = 300 in 1,000 h"],["drv","dens",S("px"),""],["drv","types",R_`\text{counts}`,"83 / 10 / 6 %"],
+ ["disc","unk",S("lnewU"),"2.5·10⁻⁴ /h"],["pilot","q",R_`\text{failure regions}`,""],["q","dens",R_`${S("w")}`,""],["q","sim",R_`x_i\sim ${S("q")}`,""],
+ ["sim","fmap",R_`f(x_i)`,""],["sim","p",S("pU"),"0 failures"],["pair","sim",S("delta"),""],
+ ["mon","odd",S("Pmiss"),""],["freq","stop",S("Cb"),""],["bayes","stop",R_`P(\cdot\mid D)`,""],["bonf","stop",S("L"),"5.08"],
+ ["freq","drv",R_`\text{Poisson}`,""],["freq","sim",R_`\text{binomial}`,""],["bayes","pair",R_`\text{prior}`,""],
+ ["hz","he",R_`HB\times\text{situation}`,"does not yield × crossing"],["fi","hz",R_`\text{FI}\to HB`,"late detection"],
+ ["he","sevc",R_`(S,\,C)`,"S2–S3, low C"],["sevc","hb",R_`${S("PC","P(\\bar C)")},\,${S("PS","P(S)")}`,"0.5, 0.8"],["he","bench",R_`\text{harm class}`,"pedestrian injury"],
+ ["hz","hbdef",R_`HB`,"HB-1"],["he","hbdef",R_`E`,"HE-1.1"],["fi","tc",R_`\text{TCs}`,"occlusion, low light"],
+ ["he","types",R_`\text{derive}`,"LS-1, LS-2, LS-3"],["sc_log","sc_tc",R_`+\ \text{TCs}`,""],["tc","sc_tc",R_`\text{catalogue}`,""],
+ ["sc_log","sc_crit",R_`${S("x")}\in\mathcal X`,"7 parameters"],["sc_crit","q",R_`\text{boundary}\to q`,""],["sc_crit","tc",R_`\text{new TCs}`,"area 3 → 2"],
+ ["sc_crit","pilot",R_`\text{runs}`,"per logical scenario"],["sc_tc","sc_cat",R_`\text{targeted}`,"240 cases"],["sc_crit","sc_cat",R_`\text{boundary}`,""],
+ ["sc_cat","sim",R_`\text{sampled}`,"9.1 M runs"],["sc_cat","pair",R_`\text{near boundary}`,"180 pairs"],["types","sc_log",R_`${S("x")}\in\mathcal X_k`,"parameters"],["sc_log","dens",S("x"),""],
+ ["m_chain","sevc",R_`P(\bar C\mid E)`,"",1],["m_is","sc_crit",R_`q\ \text{from search}`,"",1],["m_total","sc_tc",R_`\text{strata}`,"",1],
+ ["spec","hz",R_`\text{ODD}`,"urban L4"],["fi","mod",R_`\text{not acceptable}`,"10 km/h rule"],["mod","unk",S("pnew"),"≤ 10⁻⁴"],
+ ["stop","ops",R_`\text{release}`,"0.365 per year at limit"],["ops","unk",R_`\text{unlisted event}`,"counts against reserve"],["drv","ops",R_`\text{counts}`,""],
+ /* mathematical foundations (dotted) */
+ ["m_chain","hb",R_`\text{Annex C}`,"",1],["m_thin","R",R_`\lambda p`,"",1],["m_thin","pstar",R_`b/\lambda`,"",1],["m_thin","hb",R_`\text{chain of rates}`,"",1],
+ ["m_total","R",R_`\sum_k`,"",1],["m_total","tc",R_`\sum_c`,"",1],["m_total","types",R_`\text{MECE}`,"",1],
+ ["m_expect","p",R_`\int p f`,"",1],["m_expect","dens",R_`\int p=1`,"",1],
+ ["m_is","q",R_`p/q`,"",1],["m_is","sim",R_`E_q`,"",1],["m_binom","sim",R_`(1-p)^n`,"",1],["m_binom","m_zero",R_`e^{-np}`,"",1],
+ ["m_union","bonf",R_`\sum\alpha`,"",1],["m_union","budget",R_`\sum b_k`,"",1],["m_union","stop",R_`\sum`,"",1],
+ ["m_bayes","bayes",R_`\text{posterior}`,"",1],
+ ["m_pois","drv",R_`N_k`,"",1],["m_pois","m_zero",R_`n=0`,"",1],["m_pois","m_chi",R_`P(X\le N)`,"",1],["m_pois","m_thin",R_`\text{thinning}`,"",1],
+ ["m_zero","vt",R_`3/R`,"",1],["m_zero","sim",R_`L/n`,"",1],["m_zero","disc",R_`L/\tau`,"",1],["m_zero","mon",R_`L/n`,"",1],
+ ["m_chi","drv",R_`\lambda^U`,"",1],["m_chi","lam",R_`\chi^2(2N+2)`,"",1],["m_chi","stop",R_`j\ \text{failures}`,"",1],
+ ["m_gt","disc",R_`N_1/N`,"",1],["m_gt","unk",R_`\text{unseen}`,"",1],
+ ["m_norm","pair",R_`\Phi(-z)`,"",1],["m_eproc","ops",R_`E(t)\ge 20`,"",1],["m_pois","m_eproc",R_`\text{likelihood}`,"",1],["m_union","alloc",R_`\sum b_k`,"",1]
+];
+const ISO={spec:"Cl. 5",hz:"Cl. 6.3",he:"Cl. 6.3",sevc:"Cl. 6.4",hbdef:"Cl. 6.3–6.4",bench:"Cl. 6.5",crit:"Cl. 6.5",human:"Cl. 6.5",hb:"Annex C.2.1",vt:"Annex C.3",
+ fi:"Cl. 7.3",tc:"Cl. 7.3",mod:"Cl. 7.4 / 8.3",types:"Cl. 9.3",sc_log:"Cl. 9.3",lam:"Cl. 9.3",drv:"Cl. 9.3 / 11.3",dens:"Annex C.5",budget:"Cl. 9.3 / 11",alloc:"Cl. 9.3",pstar:"Cl. 9.4",
+ pilot:"Cl. 9.3 / 11.3",q:"Annex C.5",freeze:"Cl. 9.4",pair:"Annex C.1",bonf:"Annex C.6.3.2",sc_tc:"Cl. 10",sc_cat:"Cl. 10 / 11",sc_crit:"Cl. 11.3",sim:"Cl. 11.3",p:"Annex C.5",fmap:"Cl. 10 / 11",
+ disc:"Cl. 11.3",unk:"Cl. 11",R:"Annex C.2",stop:"Cl. 12",ops:"Cl. 13",odd:"Cl. 8.3.3 / 9.2",mon:"Cl. 9.2",freq:"Annex C.3"};
+const TOUR=["spec","hz","he","sevc","hbdef","bench","crit","hb","vt","fi","tc","mod","types","sc_log","lam","drv","bonf","budget","alloc","human","pstar","pilot","q","pair","freeze","sc_tc","sc_crit","sim","p","disc","unk","stop","ops","freq","bayes"];
+
+/* ---------- Plain-language layer: [level, everyday explanation without symbols] ---------- */
+const LV={b:"basic",s:"some maths",a:"advanced, optional"};
+const PLAIN={
+ m_eproc:["s","A running score of evidence against the claim. If the claim is true, the score stays small on average, so it rarely gets large, however often you look at it. When it passes 20, the claim is in trouble."],
+ ops:["b","After release, keep counting. Field data cannot prove the car safe enough, because a year without any event only shows the rate is below 8 times the limit. But it can show the car is not safe enough: five events in the first year would be very unlikely if the car met its goal, so they raise the alarm."],
+ mod:["b","If the car cannot handle a difficult condition well enough, change the car: improve it, restrict it, or hand over. Here the robotaxi slows to 10 km/h whenever something it cannot classify is near a crosswalk. That also limits the damage in situations nobody thought of."],
+ spec:["b","Write down what the robotaxi is supposed to do and where it may drive, precisely enough that a mistake can be recognised and counted. Here: always yield to someone with right of way, defined as never entering the crossing zone above 10 km/h while that person is less than 2 seconds away."],
+ hz:["b","List what the vehicle could do wrong, described without any setting: not yielding, braking for no reason, accelerating or steering unexpectedly, or losing braking, steering or propulsion. Each item gets its own safety goal."],
+ he:["b","A behaviour only hurts someone in a setting where a person is exposed. “Does not yield” combined with “pedestrian stepping onto a zebra crossing” is one such hazardous event. The same behaviour has other hazardous events (a cyclist when turning, an oncoming car), and each hurts a different kind of road user."],
+ fi:["b","Ask why the car could make the mistake: its sensors see a pedestrian too late, its prediction misreads what the pedestrian will do, or it decides too late. The conditions that provoke these weaknesses, such as darkness or a parked bus blocking the view, are the triggering conditions."],
+ sevc:["b","Turn the hazard ratings into numbers: how often the exposed person cannot get out of the way, and how often a collision injures them. Accident studies and injury curves over impact speed supply these numbers."],
+ sc_log:["b","Each scenario pattern is a test recipe with knobs: the robotaxi's speed, the pedestrian's speed and timing, light, road surface, adult or child. Setting every knob gives one concrete test. Difficult settings such as darkness are areas of knob positions, not separate recipes."],
+ sc_tc:["b","Deliberately turn on the conditions known to cause trouble, one at a time and in combination, and require the car to pass every case. These are targeted pass/fail checks."],
+ sc_crit:["b","Let a computer turn the knobs in search of the closest calls. This finds weak spots nobody listed and shows the large random test campaign where to look hardest."],
+ sc_cat:["b","Two kinds of test come out: targeted pass/fail checks for known weak spots, and large random samples that measure how often the car fails. The first finds problems; only the second gives a rate."],
+ hbdef:["b","A hazardous behaviour is what the car does, described without a setting: not yielding, braking for no reason. Harm only follows if it happens where someone is exposed (a pedestrian stepping onto a zebra crossing), the person cannot get out of the way, and the collision injures them. Each link is a chance, not a certainty."],
+ bench:["b","To call the robotaxi safe enough, compare it with human drivers in the same kind of traffic. Here a placeholder: human drivers injure about 5 pedestrians per million hours of driving. Real data must be matched to the robotaxi's roads, speeds and times."],
+ crit:["b","The goal as one number: through this one mistake, the robotaxi may injure a pedestrian less than once per 10 million hours of driving. We got there by asking for 10 times better than humans and giving this mistake one fifth of that allowance, because other mistakes can hurt pedestrians too."],
+ hb:["b","Not every mistake hurts someone. Only half the time is a pedestrian really stepping out, only half of those cannot escape, and 8 in 10 collisions injure. So only 1 mistake in 5 leads to harm (0.5 × 0.5 × 0.8 = 0.2). The mistake itself may therefore happen 5 times as often as the harm: once per 2 million hours."],
+ vt:["b","The obvious test: drive and wait. If the car made the mistake once per 2 million hours, then in 6 million hours you would expect 3 mistakes. Seeing none at all would then happen only 5 % of the time. So 6 million mistake-free hours show, with 95 % confidence, that the rate is low enough. For a fleet of 100 cars that is about 8 years, and every software update starts the clock again."],
+ stop:["b","At the end, add up the worst plausible rate from every kind of crossing, plus the allowance for surprises. If the total stays under the limit (once per 2 million hours), the goal is shown. It is like checking that all monthly expenses together stay within your income."],
+ budget:["b","Like a household budget: the total allowance is fixed. Keep 10 % aside for things nobody has thought of yet, and share the rest among the kinds of crossing you know."],
+ human:["b","A fairness check. No single kind of crossing may be handled worse than a human driver would handle it, even if the total looks fine. Otherwise the car could be excellent by day and worse than humans at night, and night-time pedestrians would carry the risk."],
+ alloc:["b","The budget split decides how much risk each kind of crossing may carry. The fair rule: every pedestrian gets the same protection, whichever kind of crossing they are in. So each kind gets budget in proportion to how often it happens. Clear-view crossings happen most often and get 82 % of the budget, and every crossing ends up with the same allowed failure chance, 1 in 11.3 million. What testing costs plays no role."],
+ pstar:["b","Turn the hourly allowance into an allowance per crossing. Turning crossings happen about 0.35 times an hour and may cause at most 0.31 mistakes per 10 million hours. So the car may fail in at most 1 of 11.3 million turning crossings, the same as in every other kind."],
+ freeze:["b","Before the real test campaign, write down exactly what will be tested and how pass and fail are judged, and get it approved. Like a referee: the rules are fixed before the match, not after seeing the score."],
+ R:["b","The one number everything is about: how often the robotaxi really makes this mistake per hour. Nobody can see it directly. It equals “how often each kind of crossing happens” times “how often the car fails in it”, added up over the kinds."],
+ types:["b","Sort all crossings of this kind into a few scenario patterns that do not overlap and together cover everything: pedestrian in clear view, pedestrian stepping out from behind a parked vehicle, robotaxi turning onto the crossing. Each pattern gets its own share of the budget and its own test target. Darkness or rain are settings inside each pattern, not patterns of their own."],
+ lam:["b","Count how often each kind of crossing happens during normal driving. 300 night crossings in 1,000 hours is about 0.3 per hour. Counts wobble by chance, so we use a slightly higher, cautious value (0.35)."],
+ tc:["b","Conditions that make the sensors or the software struggle: darkness, a vehicle blocking the view, wet-road reflections, a small child, a pedestrian arriving very late. Inside each scenario pattern they mark the difficult areas, which get targeted tests and more random samples. They do not get their own budget."],
+ dens:["s","Even among night crossings, some versions are common (pedestrian seen early, car slow) and some are rare (pedestrian appears late, car fast). This describes how common each version is on real roads, so rare versions can be counted as rare."],
+ unk:["b","Some situations nobody has thought of yet. You cannot test those, so you keep a reserve for them and argue that the car is cautious when something unexpected appears: it slows to 10 km/h near anything it cannot classify."],
+ p:["s","The chance the car fails in one crossing of a given kind. It is an average over all versions of that crossing: rare dangerous versions count little, common easy ones count a lot. The ∫ sign just means “add up over all versions”."],
+ fmap:["b","Imagine a huge table listing every possible version of a crossing and, for each one, “car fails” or “car passes”. That table is the failure map. Every test fills in one entry."],
+ odd:["b","If a condition is too hard, such as heavy snow, the robotaxi is not allowed to drive in it. The remaining risk is the car not noticing that snow has started."],
+ drv:["b","Drive a fleet and let software tag every crossing it meets. The counts say how often each kind of crossing happens. You need to see crossings, not accidents, which is why 21,000 hours are enough here instead of 6 million."],
+ disc:["b","Keep a diary of every new kind of situation the fleet meets. If 20,000 hours bring nothing new, new kinds must be rare: at most about once in 4,000 hours."],
+ pilot:["b","A small trial of the simulation before the real campaign. It shows where the car comes close to failing, so the main campaign can test those spots more often. Each such run then counts like several ordinary crossings. This changes how many runs are needed, never how safe the car must be."],
+ q:["s","Test the dangerous versions more often than they happen in reality, then count each result for less. Like a survey that interviews extra people in a small town to hear enough from it, and then weights their answers down so the national result stays fair."],
+ sim:["b","Run hundreds of thousands of simulated crossings. If none fails, the car's true failure chance must be small: had it been bigger than the allowance, you would almost certainly have seen at least one failure among that many crossings."],
+ mon:["b","Test whether the car notices when conditions leave its allowed domain, for example when snow starts. Zero misses in many tests puts an upper limit on how often it would miss."],
+ pair:["b","Run the same crossing in the simulator and on a test track with a dummy pedestrian. The difference shows how wrong the simulator can be. A simulated pass only counts if the car kept a gap (1.17 m) larger than any plausible simulator error. Like building a bridge for more weight than it will ever carry."],
+ freq:["s","“95 % confident” here means: if you repeated the whole test campaign many times, this method would give a limit above the true value in at least 95 of 100 campaigns. It describes the method, not a probability about this particular car."],
+ bayes:["s","A second way of reasoning: start from a belief about the rate, then update it with the data. With no prior knowledge it gives the same answer. With prior knowledge, such as results from the previous software version, it could need less testing, but you must justify that knowledge."],
+ bonf:["s","The final check rests on eight separate claims. Each could be wrong by bad luck, and those chances add up. To keep the chance that any of them is wrong at 5 %, each must be wrong at most 1 time in 160. The cost: the factor 3 from the rule of three grows to about 5."],
+ m_chain:["b","To get the chance that A and B and C all happen, multiply: the chance of A, times the chance of B once A has happened, times the chance of C once both have. Example: 0.5 × 0.5 × 0.8 = 0.2."],
+ m_thin:["b","If crossings happen 0.35 times an hour and the car fails in a small fraction of them, failures happen 0.35 × that fraction times an hour. Rate times chance gives a new rate."],
+ m_total:["b","To get an overall chance, split everything into groups, take each group's chance, weight it by the group's size, and add. Like an overall grade made of weighted sub-grades."],
+ m_expect:["s","An average in which common cases count more than rare ones. The ∫ sign means “add up over all versions”, the continuous version of a sum."],
+ m_is:["s","If you test dangerous versions 10 times more often than reality presents them, give each of those results one tenth of the weight. The weighted average comes out the same as testing in proportion to reality, but you learn far more about the dangerous part."],
+ m_binom:["s","If each run fails with a small chance p, the chance that n runs all pass is (1 − p) multiplied by itself n times. Once n × p is above about 3, that chance is below 5 %."],
+ m_union:["b","The chance that at least one of several things goes wrong is at most the sum of their chances. Two 1 % risks give at most 2 %."],
+ m_bayes:["s","Updating a belief with evidence: the new belief is the old belief, re-weighted by how well each possibility explains what you saw."],
+ m_pois:["s","The standard model for random events with a steady average rate, such as raindrops on a window or calls to a hotline. It tells how likely each count is. For example, if 3 events are expected, seeing none has a 5 % chance."],
+ m_zero:["b","The rule of three. If something has not happened in a long stretch, its rate is very likely below 3 divided by the length of that stretch. Reason: if 3 events were expected, seeing none happens only 5 % of the time."],
+ m_chi:["s","When you did see some events, you need a number a bit bigger than 3. A table gives it: about 4.7 after one event and 6.3 after two (at 95 %). It is a lookup, not something to compute by hand."],
+ m_gt:["b","If many of the things you have seen were one-of-a-kind, there are probably more kinds you have not seen. The share of one-offs estimates the chance that the next one is new."],
+ m_norm:["s","Errors usually follow the bell curve. Being off by more than 6.5 typical errors is extremely rare under that curve: about 4 in 100 billion. Whether real simulator errors follow the bell curve that far out is the open question."]
+};
+
+/* ---------- Step-by-step lessons for the mathematical foundations: pre = what to read first, steps = [sentence, formula] ---------- */
+const MATHPATH=["m_chain","m_total","m_binom","m_pois","m_zero","m_chi","m_thin","m_union","m_expect","m_is","m_norm","m_bayes","m_gt","m_eproc"];
+const LESSON={
+ m_eproc:{pre:["m_pois","m_bayes"],steps:[
+  ["Under the claim the rate is λ₀; under the alternative it is λ₁ > λ₀. After t hours with k events, the likelihood ratio of the two is",R_`E(t)=\Big(\frac{\lambda_1}{\lambda_0}\Big)^{k}e^{-(\lambda_1-\lambda_0)t}`],
+  ["If the claim is true, its expected value is 1 at every moment: on average it does not grow.",R_`E_{\lambda_0}\big[E(t)\big]=1`],
+  ["Ville's inequality: a non-negative process with expected value 1 reaches 1/α with probability at most α, over the whole time, not only at one moment.",R_`P_{\lambda_0}\Big(\sup_{t} E(t)\ge\tfrac{1}{\alpha}\Big)\le\alpha`],
+  ["So you may check after every event or every day and stop at the first alarm. With α = 0.05 the alarm level is 20.",R_`\text{alarm at } E(t)\ge 20`],
+  ["Solve for the event count that raises the alarm after t hours.",R_`k\ \ge\ \frac{\ln 20+(\lambda_1-\lambda_0)\,t}{\ln(\lambda_1/\lambda_0)}`]],
+  check:["λ₀ = 5·10⁻⁷ per hour, λ₁ = 10⁻⁶ per hour, one year = 730,000 h. How many events raise the alarm?","k ≥ (ln 20 + 0.365)/ln 2 = (3.00 + 0.365)/0.693 = 4.85, so 5 events."],
+  pitfall:"The alternative λ₁ must be fixed in advance. Choosing it after seeing the data breaks the guarantee."},
+ m_chain:{pre:[],steps:[
+  ["A probability is a number between 0 and 1: the share of cases in which something happens.",R_`0\le P(A)\le 1`],
+  ["P(B | A) reads “probability of B given A”: among only the cases where A happened, the share in which B also happens.",R_`P(B\mid A)=\frac{P(A\cap B)}{P(A)}`],
+  ["Multiply both sides by P(A) to get the chance that both happen. The symbol ∩ means “and”.",R_`P(A\cap B)=P(A)\,P(B\mid A)`],
+  ["Apply the same step again for a third event. Each factor is conditioned on everything before it.",R_`P(A\cap B\cap C)=P(A)\,P(B\mid A)\,P(C\mid A\cap B)`],
+  ["Annex C is this rule with A = hazardous behaviour, then event, not avoided, injury.",R_`P(H)=P(HB)\,P(E\mid HB)\,P(\bar C\mid E,HB)\,P(S\mid \bar C,E,HB)`]],
+  check:["Half of the behaviours meet a pedestrian, half of those cannot be avoided, 8 in 10 collisions injure. What fraction of behaviours injure someone?","0.5 × 0.5 × 0.8 = 0.2, one in five. So the behaviour may be five times as frequent as the harm."],
+  pitfall:"Writing P(S | C̄) instead of P(S | C̄, E, HB) silently assumes severity does not depend on what happened before. A late, fast failure is more severe than an early, slow one."},
+ m_total:{pre:["m_chain"],steps:[
+  ["Split all cases into groups c that do not overlap and together cover everything (MECE).",""],
+  ["Each group has a share P(c). The shares add up to 1.",R_`\sum_c P(c)=1`],
+  ["Within group c the chance of failure is P(F | c). By the chain rule, the chance of “group c and failure” is P(c)·P(F | c).",R_`P(c\cap F)=P(c)\,P(F\mid c)`],
+  ["The groups do not overlap, so these pieces simply add up to the overall chance: a weighted average.",R_`P(F)=\sum_c P(c)\,P(F\mid c)`],
+  ["With rates instead of shares, the same idea gives the robotaxi's total behaviour rate.",R_`R=4.0\,p_1+0.5\,p_2+0.3\,p_3\ \ \text{per hour}`]],
+  check:["Shares 0.8, 0.1 and 0.1 with failure chances 10⁻⁸, 2·10⁻⁷ and 8·10⁻⁷. What is the overall failure chance?","0.8·10⁻⁸ + 0.1·2·10⁻⁷ + 0.1·8·10⁻⁷ = 0.08·10⁻⁷ + 0.2·10⁻⁷ + 0.8·10⁻⁷ ≈ 1.1·10⁻⁷. The small night group dominates."],
+  pitfall:"Overlapping groups count cases twice; gaps miss cases. Both break the sum."},
+ m_binom:{pre:["m_chain"],steps:[
+  ["One run fails with chance p, so it passes with chance 1 − p.",R_`P(\text{pass})=1-p`],
+  ["Independent runs: by the chain rule, multiply. n passes in a row:",R_`P(\text{all } n \text{ pass})=(1-p)^{n}`],
+  ["Write the power as an exponential. For small p, ln(1 − p) ≈ −p.",R_`(1-p)^{n}=e^{\,n\ln(1-p)}\approx e^{-np}`],
+  ["A failure probability p is “ruled out” if seeing all n pass would have been less likely than 1 − C.",R_`e^{-np}\le 1-C`],
+  ["Take logarithms and solve for p. Everything above this bound is ruled out.",R_`p\ge\frac{\ln\frac{1}{1-C}}{n}=\frac{L}{n}\quad\Rightarrow\quad p^{U}=\frac{L}{n}`]],
+  check:["1,000,000 independent runs pass. What is the 95 % upper bound on p?","L = ln 20 ≈ 3.0, so pᵁ = 3.0 / 10⁶ = 3·10⁻⁶."],
+  pitfall:"Runs must be independent. A thousand frames from one recorded scene are one run, not a thousand."},
+ m_pois:{pre:["m_binom"],steps:[
+  ["Cut τ hours into very many tiny slices of length dt. In each slice an event happens with a tiny chance λ·dt.",R_`P(\text{event in } dt)=\lambda\,dt`],
+  ["Counting events in τ hours is then like counting failures in n = τ/dt trials. The expected count is n times the chance:",R_`E[N]=\frac{\tau}{dt}\cdot\lambda\,dt=\lambda\tau`],
+  ["Letting the slices shrink turns the binomial count into the Poisson distribution.",R_`P(N=k)=\frac{(\lambda\tau)^{k}}{k!}\,e^{-\lambda\tau}`],
+  ["The most used case is k = 0: no events at all.",R_`P(N=0)=e^{-\lambda\tau}`],
+  ["The spread of a Poisson count is the square root of its mean. Night pilot: mean 300, spread about 17.",R_`\text{SD}(N)=\sqrt{\lambda\tau}=\sqrt{300}\approx 17`]],
+  check:["You expect 3 events. What is the chance of seeing none?","e⁻³ ≈ 0.05, that is 5 %. This is where the rule of three comes from."],
+  pitfall:"It assumes a constant rate. Rush hour and 3 a.m. have different rates; mix them blindly and the bounds are off. Stratify instead."},
+ m_zero:{pre:["m_pois"],steps:[
+  ["If the true rate were λ, the chance of seeing no events in τ hours is",R_`P(N=0\mid\lambda)=e^{-\lambda\tau}`],
+  ["Call a rate “ruled out” if seeing nothing would have been less likely than 1 − C.",R_`e^{-\lambda\tau}\le 1-C`],
+  ["Take natural logarithms of both sides and flip the sign.",R_`\lambda\tau\ge\ln\frac{1}{1-C}=L`],
+  ["So the upper bound on the rate is L divided by the hours. L is 3.0 at 95 % and 5.08 at 99.375 %.",R_`\lambda^{U}=\frac{L}{\tau},\qquad L=\ln 20\approx 3.0,\ \ \ln 160\approx 5.08`],
+  ["Turned around, it gives the hours needed for a target rate.",R_`\tau=\frac{L}{R_{HB}}=\frac{3.0}{5\cdot10^{-7}}=6.0\cdot10^{6}\ \text{h}`]],
+  check:["No new kind of situation in 20,000 h, with L = 5.08. What is the bound on new types per hour?","5.08 / 20,000 = 2.5·10⁻⁴ per hour, about once in 4,000 hours."],
+  pitfall:"It holds only for a test planned in advance. Stopping when it looks good, or continuing after an event, changes the statistics; then use the χ² form."},
+ m_chi:{pre:["m_zero"],steps:[
+  ["You counted N events in τ hours. Rule out every mean μ = λτ under which seeing N or fewer would be less likely than 1 − C_b. The largest mean not ruled out is the bound.",R_`P(X\le N\mid\mu^{U})=\sum_{j=0}^{N}\frac{(\mu^{U})^{j}}{j!}\,e^{-\mu^{U}}=1-C_b`],
+  ["Turn counting into waiting. In a Poisson process with rate 1, “at most N events by time μ” is the same statement as “the (N+1)-th event comes after μ”.",R_`P(X\le N\mid\mu)=P\big(T_{N+1}>\mu\big)`],
+  ["The wait for the (N+1)-th event is a sum of N+1 independent exponential waits: a Gamma(N+1, 1) variable. Twice such a variable is χ² with 2N+2 degrees of freedom.",R_`T_{N+1}\sim\text{Gamma}(N+1,1)\quad\Rightarrow\quad 2\,T_{N+1}\sim\chi^2_{2N+2}`],
+  ["So the condition is a χ² tail, and the bound is a χ² quantile at level C_b.",R_`P\big(\chi^2_{2N+2}>2\mu^{U}\big)=1-C_b\;\Rightarrow\;\mu^{U}=\tfrac12\,\chi^2_{C_b}(2N+2)`],
+  ["Divide by the hours to get a rate. With N = 0, χ² with 2 degrees of freedom is exponential and the bound is the zero-failure formula (ISO 21448 C.7).",R_`\lambda^{U}=\frac{\chi^2_{C_b}(2N+2)}{2\tau},\qquad N=0:\ \tfrac12\chi^2_{C_b}(2)=\ln\frac{1}{1-C_b}=L`]],
+  check:["N = 300 encounters in τ = 1,000 h at C_b = 99.375 %. The χ² table gives 692.2 for 602 degrees of freedom. What is λᵁ?","692.2 / 2 = 346.1 encounters; divided by 1,000 h gives 0.346 per hour, against the plain average 0.300. For large N it is close to (N + z·√N)/τ with z = 2.50: 0.343."],
+  pitfall:"It assumes a homogeneous Poisson process. Encounters that cluster (the same crossing on a repeated route, rush hour) spread more than Poisson, so the bound is then too optimistic. Stratify by time and route, or use a dispersion-robust bound."},
+ m_thin:{pre:["m_pois","m_chain"],steps:[
+  ["A rate λ means that in τ hours you expect λτ events.",R_`E[N(\tau)]=\lambda\tau`],
+  ["If each event independently leads to a failure with chance p, you expect a fraction p of them to be failures.",R_`E[N_{\text{fail}}(\tau)]=p\,\lambda\tau`],
+  ["So failures arrive at rate λp, and (a standard result) they again form a Poisson process.",R_`\lambda_{\text{fail}}=\lambda\,p`],
+  ["Several independent kinds of situation add up.",R_`R=\sum_k \lambda_k\,p_k`],
+  ["Read backwards, it gives the allowed failure probability per encounter.",R_`p_k^{*}=\frac{b_k}{\lambda_k^{U}}`]],
+  check:["4 crossings per hour, failure chance 8.9·10⁻⁸ per crossing. What is the failure rate?","4 × 8.9·10⁻⁸ = 3.6·10⁻⁷ per hour, about once per 2.8 million hours."],
+  pitfall:"It needs independence. If one failure makes the next more likely (same intersection, same bug), failures cluster and the bounds are optimistic."},
+ m_union:{pre:["m_chain"],steps:[
+  ["For two events, “A or B” counts both and subtracts the overlap once. The symbol ∪ means “or”.",R_`P(A\cup B)=P(A)+P(B)-P(A\cap B)`],
+  ["Dropping the overlap can only make the right side bigger.",R_`P(A\cup B)\le P(A)+P(B)`],
+  ["Repeating this for many events gives the union bound.",R_`P\Big(\bigcup_i A_i\Big)\le\sum_i P(A_i)`],
+  ["Use 1, budgets: harm from several paths is at most the sum of the paths.",R_`\sum_k b_k+b_{\text{unk}}\le R_{HB}`],
+  ["Use 2, confidence: if each of m bounds is wrong with chance (1 − C)/m, the chance that any is wrong is at most 1 − C.",R_`P(\text{all right})\ge 1-m\cdot\frac{1-C}{m}=C`]],
+  check:["Ten separate bounds, each at 99 %. What joint confidence can you claim?","At least 1 − 10 × 0.01 = 90 %."],
+  pitfall:"It is conservative when events overlap a lot, but it is never wrong. That is why assessors like it."},
+ m_expect:{pre:["m_total"],steps:[
+  ["With a few groups, an average is a weighted sum: each value times its share.",R_`E[f]=\sum_i p_i\,f(x_i)`],
+  ["When x is continuous (any speed, any distance), shares are replaced by a density p(x). The share of cases in a thin slice of width dx is p(x)·dx.",R_`P(x\le X\le x+dx)\approx p(x)\,dx`],
+  ["Adding up over infinitely many thin slices is what the integral sign ∫ means.",R_`E[f(X)]=\int p(x)\,f(x)\,dx`],
+  ["If f is 1 where the car fails and 0 elsewhere, the average is the share of variants where it fails.",R_`p_k=\int p_k(x)\,f(x)\,dx=P\big(f(X)=1\big)`],
+  ["A simulation estimates this by averaging f over variants drawn like reality.",R_`\hat p=\frac{1}{n}\sum_{i=1}^{n}f(x_i),\qquad x_i\sim p`]],
+  check:["Detection distance is spread evenly between 0 and 100 m and the car fails below 5 m. What is p?","Density 1/100 per metre over 5 metres: 5/100 = 0.05."],
+  pitfall:"The plain average only works if samples are drawn like reality. To test differently you need weights: see change of measure."},
+ m_is:{pre:["m_expect"],steps:[
+  ["Start from the integral. Multiply and divide by any density q that is positive wherever p·f is.",R_`\int p\,f\,dx=\int q\,\frac{p}{q}\,f\,dx`],
+  ["The right side is an average under q of f times the weight w = p/q.",R_`=E_{q}\big[f(X)\,w(X)\big],\qquad w(x)=\frac{p(x)}{q(x)}`],
+  ["So: draw test cases from q and average f·w. The answer is still the real-world probability.",R_`\hat p=\frac{1}{n}\sum_{i=1}^{n}f(x_i)\,w(x_i),\qquad x_i\sim q`],
+  ["If q tests a dangerous region 10× more often than reality, results there get weight 0.1.",R_`w=\frac{p}{q}=\frac{1}{10}`],
+  ["For a zero-failure bound, n weighted runs then act like n / w_max real encounters.",R_`p^{U}\approx\frac{L\,w_{\max}}{n}`]],
+  check:["Without importance sampling LS-3 needs 57 million runs. How many with w_max = 0.1?","57 million × 0.1 = 5.7 million runs."],
+  pitfall:"If q is zero or tiny somewhere f can be 1, failures there are never sampled and weights explode. Mix in a share of p (here 10 %)."},
+ m_norm:{pre:["m_expect"],steps:[
+  ["Many measurement errors follow the bell curve. In units of its standard deviation σ, its density is",R_`\varphi(u)=\frac{1}{\sqrt{2\pi}}\,e^{-u^{2}/2}`],
+  ["The chance of an error larger than z standard deviations is the area under the far tail.",R_`P(U>z)=\int_{z}^{\infty}\varphi(u)\,du=\Phi(-z)`],
+  ["It falls off extremely fast: Φ(−2) = 2.3 %, Φ(−3) = 0.13 %, Φ(−5) = 2.9·10⁻⁷, Φ(−6.5) = 4·10⁻¹¹.",""],
+  ["σ is estimated from m paired runs. A χ² table gives a cautious upper bound on it.",R_`\sigma^{U}=\hat\sigma\sqrt{\frac{m-1}{\chi^2_{1-C_b}(m-1)}}`],
+  ["The simulator margin is the bias plus z cautious standard deviations.",R_`\delta=\hat\mu+z\,\sigma^{U}`]],
+  check:["Bias 0.05 m, σᵁ = 0.17 m, z = 6.5. What margin must a simulated pass clear?","0.05 + 6.5 × 0.17 ≈ 1.16 m (1.17 m with the unrounded σᵁ)."],
+  pitfall:"Real error distributions are rarely Gaussian that far out. Heavier tails make Φ(−z) far too optimistic."},
+ m_bayes:{pre:["m_chain"],steps:[
+  ["The chain rule works in both orders.",R_`P(A\cap B)=P(A)\,P(B\mid A)=P(B)\,P(A\mid B)`],
+  ["Solve for P(A | B). This is Bayes' theorem.",R_`P(A\mid B)=\frac{P(B\mid A)\,P(A)}{P(B)}`],
+  ["For an unknown rate λ and data D, read it as: belief after = how well λ explains D × belief before.",R_`p(\lambda\mid D)\ \propto\ p(D\mid\lambda)\,p(\lambda)`],
+  ["Zero events in τ hours have likelihood e^(−λτ). With a flat prior, the normalised posterior is",R_`p(\lambda\mid D)=\tau\,e^{-\lambda\tau}`],
+  ["The 95 % credible bound: integrate the posterior to 0.95.",R_`\int_{0}^{x}\tau e^{-\lambda\tau}\,d\lambda=1-e^{-x\tau}=0.95\;\Rightarrow\;x=\frac{\ln 20}{\tau}`]],
+  check:["6·10⁶ hours without events and a flat prior. What is the 95 % credible bound?","3.0 / 6·10⁶ = 5·10⁻⁷ per hour, the same as the frequentist bound."],
+  pitfall:"The prior is a claim too. A prior from the previous release must explain why that release's evidence still applies to the new one."},
+ m_gt:{pre:["m_zero"],steps:[
+  ["Record the type of each observed situation. N₁ = number of types seen exactly once, N = total observations.",""],
+  ["Turing's estimate for the chance that the next observation is a type never seen before:",R_`P_{0}\approx\frac{N_1}{N}`],
+  ["Intuition: types seen once were “nearly missed”. Their share estimates the share of types missed altogether.",""],
+  ["If no type was seen only once, fall back on the zero-failure bound for the rate of new types.",R_`\lambda_{\text{new}}^{U}=\frac{L}{\tau}`]],
+  check:["1,000 observations, 4 types seen exactly once. Chance that the next is new?","4 / 1,000 = 0.4 %."],
+  pitfall:"It depends on how finely types are defined. A coarse catalogue looks complete far too early."}
+};
+
+let ACT=[];
+/* ---------- Sources for every formula. status: v = location checked (course verification log), n = location not checked, o = derived or chosen in this course ---------- */
+const REF={
+ ISO:{s:"ISO 21448:2022",f:"ISO 21448:2022(E), Road vehicles — Safety of the intended functionality",u:"https://www.iso.org/standard/77490.html"},
+ TS5083:{s:"ISO/TS 5083:2025",f:"ISO/TS 5083:2025, Safety for automated driving systems — Design, verification and validation",u:"https://webstore.ansi.org/preview-pages/ISO/preview_ISO+TS+5083-2025.pdf"},
+ PUTZE:{s:"Putze et al. 2023",f:"Putze, Westhofen, Koopmann, Böde, Neurohr (2023). On Quantification for SOTIF Validation of Automated Driving Systems. arXiv:2304.10170",u:"https://arxiv.org/abs/2304.10170"},
+ BETS:{s:"Betschinske et al. 2025",f:"Betschinske et al. (2025). Towards more efficient quantitative safety validation of residual risk for assisted and automated driving. arXiv:2506.10363",u:"https://arxiv.org/abs/2506.10363"},
+ KALRA:{s:"Kalra & Paddock 2016",f:"Kalra, Paddock (2016). Driving to Safety. RAND RR-1478-RC",u:"https://www.rand.org/pubs/research_reports/RR1478.html"},
+ LW97:{s:"Littlewood & Wright 1997",f:"Littlewood, Wright (1997). Some conservative stopping rules for the operational testing of safety-critical software. IEEE Trans. Software Engineering 23(11):673–683",u:"https://openaccess.city.ac.uk/id/eprint/1614/"},
+ WARG:{s:"Warg et al. 2020",f:"Warg et al. (2020). The Quantitative Risk Norm — A Proposed Tailoring of HARA for ADS. DSN Workshops",u:"https://www.es.mdh.se/pdf_publications/5963.pdf"},
+ WERLING:{s:"Werling et al. 2025",f:"Werling, Faller, Betz, Straub (2025). Safety integrity framework for automated driving. arXiv:2503.20544",u:"https://arxiv.org/abs/2503.20544"},
+ HOF:{s:"Hofmeister & Kinalzyk",f:"Hofmeister, Kinalzyk (AVL). Acceptance Criteria, Validation Targets and Performance Targets in an ISO 21448 conform development process. Thematic paper, ca. 2023",u:""},
+ PATEL:{s:"Patel & Jung 2026",f:"Patel, Jung (2026). Uncertainty evaluation to support SOTIF analysis … across triggering conditions in ML-based LiDAR object detection. arXiv:2610.35092",u:"https://arxiv.org/abs/2610.35092"},
+ GARWOOD:{s:"Garwood 1936",f:"Garwood (1936). Fiducial limits for the Poisson distribution. Biometrika 28:437–442",u:"https://jhanley.biostat.mcgill.ca/bios601/Intensity-Rate/Garwood1936.pdf"},
+ CP34:{s:"Clopper & Pearson 1934",f:"Clopper, Pearson (1934). The use of confidence or fiducial limits illustrated in the case of the binomial. Biometrika 26:404–413",u:""},
+ HANLEY:{s:"Hanley & Lippman-Hand 1983",f:"Hanley, Lippman-Hand (1983). If nothing goes wrong, is everything all right? Interpreting zero numerators. JAMA 249(13):1743–1745",u:"https://scilit.com/publications/ddfc523d905fccaecb8488227831d6ec"},
+ GOOD:{s:"Good 1953",f:"Good (1953). The population frequencies of species and the estimation of population parameters. Biometrika 40:237–264",u:""},
+ BK:{s:"Berend & Kontorovich 2013",f:"Berend, Kontorovich (2013). On the concentration of the missing mass. Electronic Communications in Probability. arXiv:1210.3248",u:"https://arxiv.org/abs/1210.3248"},
+ OWEN:{s:"Owen 2013",f:"Owen (2013). Monte Carlo theory, methods and examples",u:"https://artowen.su.domains/mc/"},
+ ZHAO:{s:"Zhao et al. 2017",f:"Zhao et al. (2017). Accelerated evaluation of automated vehicles safety in lane-change scenarios based on importance sampling techniques. IEEE T-ITS 18(3); arXiv:1605.04965",u:"https://arxiv.org/abs/1605.04965"},
+ KINGMAN:{s:"Kingman 1993",f:"Kingman (1993). Poisson Processes. Oxford University Press",u:""},
+ FELLER:{s:"Feller 1968",f:"Feller (1968). An Introduction to Probability Theory and Its Applications, Vol. 1, 3rd ed. Wiley",u:""},
+ CB:{s:"Casella & Berger 2002",f:"Casella, Berger (2002). Statistical Inference, 2nd ed. Duxbury",u:""},
+ COCHRAN:{s:"Cochran 1977",f:"Cochran (1977). Sampling Techniques, 3rd ed. Wiley",u:""},
+ BOYD:{s:"Boyd & Vandenberghe 2004",f:"Boyd, Vandenberghe (2004). Convex Optimization. Cambridge University Press",u:"https://web.stanford.edu/~boyd/cvxbook/"},
+ MIL:{s:"MIL-HDBK-338",f:"MIL-HDBK-338, Electronic Reliability Design Handbook (reliability apportionment)",u:""},
+ DUNN:{s:"Dunn 1961",f:"Dunn (1961). Multiple comparisons among means. Journal of the American Statistical Association 56(293):52–64",u:"https://doi.org/10.1080/01621459.1961.10482090"},
+ BONF:{s:"Bonferroni 1936",f:"Bonferroni (1936). Teoria statistica delle classi e calcolo delle probabilità. Pubblicazioni del R. Istituto Superiore di Scienze Economiche e Commerciali di Firenze 8:1–62",u:""},
+ NEYMAN:{s:"Neyman 1937",f:"Neyman (1937). Outline of a theory of statistical estimation based on the classical theory of probability. Phil. Trans. R. Soc. A 236:333–380",u:""},
+ BAYES:{s:"Bayes 1763",f:"Bayes (1763). An essay towards solving a problem in the doctrine of chances. Phil. Trans. 53:370–418",u:""},
+ N08:{s:"Course note 08",f:"SOTIF Risk Course, note 08: Splitting the SOTIF risk budget (course/docs/08-risk-budget-split.md)",u:""},
+ D01:{s:"Course doc 01",f:"SOTIF Risk Course, doc 01: Scenario-based residual risk",u:""},
+ D02:{s:"Course doc 02",f:"SOTIF Risk Course, doc 02: Field data and SPIs",u:""},
+ D03:{s:"Course doc 03",f:"SOTIF Risk Course, doc 03: Gaussian copula",u:""},
+ D06:{s:"Course doc 06",f:"SOTIF Risk Course, doc 06: Scaling to ACC and robotaxi",u:""},
+ VTS:{s:"Course reference sheet",f:"SOTIF Risk Course, reference sheet: Validation targets (χ² factor table)",u:""},
+ I26262:{s:"ISO 26262-3:2018",f:"ISO 26262-3:2018, Road vehicles — Functional safety — Part 3: Concept phase",u:""},
+ NHTSA:{s:"Wang 2022 (NHTSA)",f:"Wang (2022). MAIS(05/08) injury probability curves as functions of delta V. NHTSA DOT HS 813 219",u:"https://crashstats.nhtsa.dot.gov/Api/Public/Publication/813219"},
+ MENZEL:{s:"Menzel et al. 2018",f:"Menzel, Bagschik, Maurer (2018). Scenarios for development, test and validation of automated vehicles. IEEE Intelligent Vehicles Symposium",u:""},
+ DEGELDER:{s:"de Gelder & Op den Camp 2024",f:"de Gelder, Op den Camp (2024). How (not) to parameterize scenarios. IEEE IAVVC. arXiv:2409.01117",u:"https://arxiv.org/abs/2409.01117"},
+ FENG:{s:"Feng et al. 2023",f:"Feng et al. (2023). Dense reinforcement learning for safety validation of autonomous vehicles. Nature 615:620–627",u:"https://doi.org/10.1038/s41586-023-05732-2"},
+ MOSS:{s:"Moss et al. 2023",f:"Moss et al. (2023/24). Bayesian safety validation for failure probability estimation of black-box systems. arXiv:2305.02449",u:"https://arxiv.org/abs/2305.02449"},
+ KROGER:{s:"Kröger 2025",f:"Kröger (2025). How safe should automated vehicles be? Next Research 2:100238",u:"https://www.sciencedirect.com/science/article/abs/pii/S3050475925001095"},
+ RAMDAS:{s:"Ramdas et al. 2023",f:"Ramdas, Grünwald, Vovk, Shafer (2023). Game-theoretic statistics and safe anytime-valid inference. Statistical Science 38(4). arXiv:2210.01948",u:"https://arxiv.org/abs/2210.01948"},
+ WALD:{s:"Wald 1945",f:"Wald (1945). Sequential tests of statistical hypotheses. Annals of Mathematical Statistics 16(2):117–186",u:""},
+ PORTER:{s:"Porter 2025",f:"Porter (2025). Confidence intervals for the Poisson distribution. arXiv:2509.02852",u:"https://arxiv.org/abs/2509.02852"},
+ HERE:{s:"This atlas",f:"Construction of this atlas and the robotaxi example, not taken from a published source",u:""}
+};
+const SRC={
+ m_eproc:["Ramdas et al. 2023",[["RAMDAS","e-processes and Ville's inequality","v"],["WALD","sequential probability ratio test","n"]]],
+ ops:["ISO 21448 Cl. 13",[["ISO","13.1, p. 55, and 13.3, pp. 56–57: field monitoring","v"],["ISO","13.4: SOTIF issue evaluation and resolution","n"],["RAMDAS","anytime-valid inference with e-processes","v"],["WALD","sequential probability ratio test","n"],["HERE","alarm thresholds of this example","o"]]],
+ mod:["ISO 21448 Cl. 8",[["ISO","7.4: acceptability of the response to triggering conditions; 8.3.3: functional restrictions","n"],["HERE","the 10 km/h restriction and p_new ≤ 10⁻⁴","o"]]],
+ spec:["ISO 21448 Cl. 5",[["ISO","Clause 5, 5.2: specification of the functionality","n"],["HERE","measurable definition of “does not yield”","o"]]],
+ hz:["ISO 21448 Clause 6",[["ISO","Clause 6: hazard identification and risk evaluation","n"],["ISO","6.5, pp. 30–31: acceptance criterion per hazardous behaviour","v"],["PUTZE","Sec. IV-B(b): several behaviours lead to the same harm","v"]]],
+ he:["ISO 21448 C.2.1",[["ISO","C.2.1, pp. 126–127: E, C̄ and S in Formulas (C.1)–(C.2); Note 4: consistency with the ISO 26262 HARA","v"],["I26262","Clause 6: hazard analysis and risk assessment, hazardous event, S, E, C","n"]]],
+ fi:["ISO 21448 Clause 7",[["ISO","Clause 7: functional insufficiencies and triggering conditions","n"],["ISO","4.2.2, Figs 5–6, pp. 12–14: scenario areas","v"],["PATEL","Sec. 3.5: performance per triggering condition","n"]]],
+ sevc:["ISO 21448 C.2.1",[["ISO","C.2.1, pp. 126–127: P(C̄|E) not controllable, P(S|C̄) after unsuccessful control","v"],["NHTSA","Table 1-1, p. 2: logistic injury-risk curves over Δv","n"],["PUTZE","Sec. IV-B(b): conditioning on E and HB","v"]]],
+ sc_log:["Menzel et al. 2018",[["MENZEL","functional, logical and concrete scenarios","n"],["ISO","9.1 a)–b), p. 42: coverage of the relevant scenario space","v"],["DEGELDER","parameterisation changes results","n"]]],
+ sc_tc:["ISO 21448 10.7",[["ISO","10.7, pp. 49–50: known hazardous scenarios","v"],["ISO","Clause 7: triggering conditions","n"],["HERE","the 144-case matrix","o"]]],
+ sc_crit:["ISO 21448 C.3 Fig. C.4",[["ISO","C.3, Fig. C.4, p. 135: iterative V&V turns area 3 into area 2","v"],["ISO","11.3, Table 11, p. 51: scenario exploration and random scenario simulation","v"],["ZHAO","cross-entropy search for rare events","v"],["FENG","dense reinforcement learning for accelerated testing","v"],["MOSS","Bayesian safety validation","v"]]],
+ sc_cat:["ISO 21448 10.7 / 11.1",[["ISO","10.7, pp. 49–50 (verification of known scenarios) and 11.1, p. 50 (residual risk)","v"],["D01","counting critical runs is not a risk estimate","o"]]],
+ hbdef:["ISO 21448 C.2.1",[["ISO","C.2.1, Formulas (C.1)–(C.2), pp. 126–127: the chain HB → E → C̄ → S","v"],["ISO","6.5, pp. 30–31: one acceptance criterion per hazardous behaviour","v"]]],
+ bench:["ISO 21448 6.5",[["ISO","6.5, pp. 30–31: positive risk balance as a rationale for acceptance criteria","v"],["HERE","synthetic placeholder for the human accident data","o"]]],
+ crit:["ISO 21448 6.5",[["ISO","3.1, p. 2 (definition); 6.5, pp. 30–31 (positive risk balance as a rationale)","v"],["KROGER","plausibility: about 3·10⁻⁹ fatalities/h and 4·10⁻⁸ fatal or serious injuries/h","n"],["WARG","Sec. III-B: budgets per incident type add up","n"],["HERE","margin ×0.1 and share 0.2 are choices of the example","o"]]],
+ hb:["ISO 21448 (C.1)–(C.2)",[["ISO","C.2.1, Formulas (C.1)–(C.2), pp. 126–127; Note 5 on independence, p. 127","v"],["PUTZE","Sec. IV-B(b): correct conditioning P(S | C̄, E, HB)","v"]]],
+ vt:["ISO 21448 (C.7)",[["ISO","C.3, Formula (C.7) and Notes 1–2, p. 137 (Poisson, zero events)","v"],["LW97","original source of Formula (C.7), ISO 21448 Bibliography [31]","v"],["KALRA","p. 3, Eq. 2: the same calculation for 275 M miles","v"],["BETS","no efficiency method fully replaces field testing","v"]]],
+ stop:["ISO 21448 12.3",[["ISO","12.3 c), p. 54: methods and criteria for evaluating the SOTIF","v"],["ISO","12.4: recommendation for SOTIF release","n"],["PUTZE","Sec. IV-B(b), Eq. (2): sum of upper bounds over paths","v"],["ISO","11.1, p. 50: residual risk with sufficient confidence","v"]]],
+ budget:["Warg et al. Sec. III-B",[["WARG","Sec. III-B: budgets per incident type must add up to the criterion","n"],["ISO","11.1, p. 50: residual risk of unknown scenarios","v"],["N08","step 2: reserve taken off the top (10 % is a choice)","o"]]],
+ human:["ISO 21448 6.5",[["ISO","6.5, pp. 30–31: positive risk balance","v"],["HOF","Sec. 2.2: split budgets to avoid concentrating residual risk","n"]]],
+ alloc:["Hofmeister & Kinalzyk Sec. 2.2",[["HOF","Sec. 2.2: scenario-class criteria add up to the hazard-based criterion; one validation target per scenario class; avoid concentrating residual risk","n"],["ISO","3.33, Note 3, p. 10: several validation targets for one acceptance criterion","v"],["WARG","Sec. III-B: budgets must add up","n"],["HERE","equal protection per encounter as the allocation rule","o"]]],
+ pstar:["Course note 08",[["N08","hours needed H_j = λ_k,j / r_j, read backwards","o"],["KINGMAN","thinning of a Poisson process (rate × probability)","n"]]],
+ freeze:["ISO 21448 C.3",[["ISO","C.3, p. 136: stopping rule specified before testing","v"],["ISO","3.33, Note 3, p. 10: several validation targets","v"],["WERLING","Sec. 3.3, Remark 3.7: shares move between campaigns, not within","n"],["N08","“Freeze before confirming”","o"]]],
+ R:["Putze et al. Eq. (2)",[["PUTZE","Sec. IV-B(b), Eq. (2)","v"],["D01","scenario-based risk as exposure × conditional probability","o"]]],
+ types:["Menzel et al. 2018",[["MENZEL","functional, logical and concrete scenarios","n"],["HOF","Sec. 2.2: one validation target per scenario class","n"],["WARG","Sec. III-B: categories mutually exclusive and collectively exhaustive","n"],["ISO","9.1 a)–b), p. 42: coverage of the relevant scenario space","v"]]],
+ lam:["Garwood 1936",[["GARWOOD","Sec. 4, p. 441: Poisson limits computed from the χ² table","v"],["PORTER","Sec. 5, Eq. 34 (Poisson–χ² identity); Sec. 6.1, Eq. 38 (Garwood interval)","v"],["PUTZE","Sec. IV-B(c): exposure depends on the system and route","v"]]],
+ tc:["ISO 21448 4.2.2",[["ISO","4.2.2, Figs 5–6, pp. 12–14: known and unknown hazardous scenarios","v"],["PATEL","Sec. 3.5, Eq. 5: evidence per triggering condition","n"]]],
+ dens:["ISO 21448 C.5",[["ISO","C.5, Figs C.9–C.11, pp. 146–148: parameter distributions from naturalistic data","v"],["D03","dependent parameters with a copula","o"]]],
+ unk:["ISO 21448 11.1",[["ISO","11.1, p. 50; 11.3 Note 1, p. 52: unknown scenarios and new ones after changes","v"],["D06","the unknown-scenario term and its SPIs","o"],["HERE","p_new ≤ 10⁻⁴ argued from the 10 km/h fallback","o"]]],
+ p:["ISO 21448 C.5",[["ISO","C.5, Figs C.12–C.14, pp. 149–151: risk from simulation over parameter distributions","v"],["D01","p_k as an integral over the scenario space","o"]]],
+ fmap:["Course doc 01",[["D01","failure indicator over the scenario space","o"],["HERE","pass criterion with simulator margin δ","o"]]],
+ odd:["ISO 21448 9.2",[["ISO","9.2 and Note, p. 43: ODD boundaries are part of the coverage argument","v"],["HERE","the risk term λ·π·P_miss","o"]]],
+ drv:["Garwood 1936",[["GARWOOD","Sec. 4, p. 441: Poisson limits computed from the χ² table","v"],["PORTER","Sec. 6.1, Eq. 38: upper limit ½·χ²(2N+2)","v"],["D02","what field data to record","o"]]],
+ disc:["Good 1953",[["GOOD","Good–Turing estimate N₁/N","n"],["BK","Theorem 1: upper bound on the missing mass","v"],["ISO","11.3 Note 1, p. 52: new unknowns arise with changes","v"]]],
+ pilot:["Owen 2013 Ch. 9",[["OWEN","Ch. 9: importance sampling","v"],["ISO","C.5, pp. 146–151: importance sampling over parameter distributions","v"],["PATEL","Sec. 3.5: independent evidence units","n"],["HERE","w_k as the largest weight inside the zero-failure bound","o"]]],
+ q:["Owen 2013 Ch. 9",[["OWEN","Ch. 9: importance sampling","v"],["ISO","C.5, Figs C.12–C.14, pp. 149–151: importance sampling biased to riskier areas","v"],["ZHAO","Abstract: acceleration factors for lane changes","v"]]],
+ sim:["ISO 21448 (C.7)",[["ISO","C.3, Formula (C.7), p. 137: zero-failure logic","v"],["HANLEY","the rule of three","n"],["CP34","binomial confidence limits","n"],["HERE","the factor w_max and the added Φ(−z) term","o"]]],
+ mon:["Hanley & Lippman-Hand",[["HANLEY","the rule of three","n"],["HERE","the miss probability as a separate term","o"]]],
+ pair:["ISO 21448 C.1",[["ISO","C.1, p. 125: simulation accuracy is part of the safety argument","v"],["CB","Theorem 5.3.1: sample variance and χ²","n"],["HERE","the margin δ = μ̂ + z·σᵁ","o"]]],
+ freq:["Neyman 1937",[["NEYMAN","confidence intervals","n"],["BETS","Sec. V: frequentist and Bayesian validation compared","v"]]],
+ bayes:["Betschinske et al. Sec. V",[["BAYES","Bayes' theorem","n"],["BETS","Sec. V: Bayesian priors; flat prior reproduces the frequentist bound","v"]]],
+ bonf:["ISO 21448 C.6.3.2",[["BONF","the inequalities named after him","n"],["ISO","C.6.3.2, Example 1 and footnote 1, p. 156: joint confidence 1 − (α₁ + α₂)","v"],["DUNN","turns the inequality into the α/m correction for multiple confidence statements","n"],["PUTZE","Sec. IV-B(b): Bonferroni over trigger–behaviour–event paths","v"]]],
+ m_chain:["Feller Ch. V",[["FELLER","Ch. V: conditional probability","n"],["ISO","C.2.1, p. 127: the chain applied to harm","v"],["PUTZE","Sec. IV-B(b): full conditioning","v"]]],
+ m_thin:["Kingman 1993",[["KINGMAN","colouring (thinning) theorem","n"]]],
+ m_total:["Feller Ch. V",[["FELLER","Ch. V: conditional probability and total probability","n"]]],
+ m_expect:["Casella & Berger Ch. 2",[["CB","Ch. 2: expected values","n"]]],
+ m_is:["Owen 2013 Ch. 9",[["OWEN","Ch. 9: importance sampling","v"]]],
+ m_binom:["Clopper & Pearson 1934",[["CP34","binomial confidence limits","n"],["FELLER","Ch. VI: the binomial distribution","n"]]],
+ m_union:["Dunn 1961",[["BONF","the inequalities named after him","n"],["DUNN","turns the inequality into the α/m correction for multiple confidence statements","n"],["ISO","C.6.3.2, p. 156: joint confidence","v"],["PUTZE","Sec. IV-B(b), Eq. (2)","v"]]],
+ m_bayes:["Bayes 1763",[["BAYES","the theorem","n"],["BETS","Sec. V: Bayesian validation","v"]]],
+ m_pois:["Feller Ch. VI",[["FELLER","Ch. VI: the Poisson approximation to the binomial","n"],["ISO","C.3, p. 137: Poisson assumption in Formula (C.7)","v"]]],
+ m_zero:["ISO 21448 (C.7)",[["ISO","C.3, Formula (C.7), p. 137","v"],["LW97","source of Formula (C.7)","v"],["HANLEY","the rule of three","n"]]],
+ m_chi:["Garwood 1936",[["GARWOOD","Sec. 4, p. 441: limits from the χ² table","v"],["PORTER","Sec. 5, Eq. 34: P(χ²₂ₙ < 2μ) = P(N ≥ n); Sec. 6.1, Eq. 38","v"],["VTS","χ² factor table","o"]]],
+ m_gt:["Good 1953",[["GOOD","Good–Turing estimate","n"],["BK","Theorem 1: upper bound on the missing mass","v"]]],
+ m_norm:["Casella & Berger Thm 5.3.1",[["CB","Theorem 5.3.1: sample variance and χ²","n"]]]
+};
+const STATUS={v:"checked",n:"location not checked",o:"derived or chosen here"};
+function srcHTML(id){const S_=SRC[id];if(!S_)return "";
+  return `<h3>Where this comes from</h3><ul class="srcl">${S_[1].map(([k,loc,st])=>{const r=REF[k];return `<li><span class="sst sst-${st}">${STATUS[st]}</span><b>${r.u?`<a href="${r.u}">${r.s}</a>`:r.s}</b>, ${loc}<span class="sfull">${r.f}</span></li>`;}).join("")}</ul>
+  <p class="mathlead">“Checked” locations are confirmed in the course verification log. Example values are synthetic except the Waymo benchmark.</p>`;}
+
+/* ---------- numerics ---------- */
+const LN20=Math.log(20),CB=1-0.05/8,ALPHA=0.05/8,LB=Math.log(160);
+function erfc(x){const z=Math.abs(x),t=1/(1+0.5*z);const r=t*Math.exp(-z*z-1.26551223+t*(1.00002368+t*(0.37409196+t*(0.09678418+t*(-0.18628806+t*(0.27886807+t*(-1.13520398+t*(1.48851587+t*(-0.82215223+t*0.17087277)))))))));return x>=0?r:2-r;}
+const Phi=x=>0.5*erfc(-x/Math.SQRT2), phi=x=>Math.exp(-x*x/2)/Math.sqrt(2*Math.PI);
+function invNorm(p){const a=[-39.69683028665376,220.9460984245205,-275.9285104469687,138.357751867269,-30.66479806614716,2.506628277459239],b=[-54.47609879822406,161.5858368580409,-155.6989798598866,66.80131188771972,-13.28068155288572],c=[-0.007784894002430293,-0.3223964580411365,-2.400758277161838,-2.549732539343734,4.374664141464968,2.938163982698783],d=[0.007784695709041462,0.3224671290700398,2.445134137142996,3.754408661907416],pl=0.02425;let q,r;
+ if(p<pl){q=Math.sqrt(-2*Math.log(p));return(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+ if(p>1-pl){q=Math.sqrt(-2*Math.log(1-p));return-(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5])/((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);}
+ q=p-0.5;r=q*q;return(((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q/(((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);}
+function poisCdf(N,m){if(m>600){return Phi((N+0.5-m)/Math.sqrt(m));}let term=Math.exp(-m),s=term;for(let i=1;i<=N;i++){term*=m/i;s+=term;}return Math.min(1,s);}
+function poisUpper(N,a){if(N>150){const d=2*N+2,z=invNorm(1-a),k=2/(9*d);return d*Math.pow(1-k+z*Math.sqrt(k),3)/2;}let lo=0,hi=Math.max(10,4*N+40);for(let i=0;i<90;i++){const mid=(lo+hi)/2;if(poisCdf(N,mid)>a)lo=mid;else hi=mid;}return (lo+hi)/2;}
+const SUP={"-":"⁻","0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹"};
+function sci(v,d=2){if(!isFinite(v))return"∞";if(v===0)return"0";const e=Math.floor(Math.log10(Math.abs(v)));if(e>=-2&&e<=4)return(+v.toPrecision(3)).toLocaleString("en-US");const m=v/Math.pow(10,e);return m.toFixed(d)+"·10"+String(e).split("").map(c=>SUP[c]).join("");}
+const eur=v=>"€"+Math.round(v).toLocaleString("en-US");
+
+/* ---------- plotting helper ---------- */
+const VW=340,VH=196,ML=46,MR=12,MT=12,MB=36;
+function frame(o){
+  const lx=v=>o.logx?Math.log10(v):v, ly=v=>o.logy?Math.log10(v):v;
+  const sx=v=>ML+(lx(v)-lx(o.x0))/(lx(o.x1)-lx(o.x0))*(VW-ML-MR);
+  const sy=v=>VH-MB-(ly(v)-ly(o.y0))/(ly(o.y1)-ly(o.y0))*(VH-MT-MB);
+  let g=`<line x1="${ML}" y1="${VH-MB}" x2="${VW-MR}" y2="${VH-MB}" stroke="var(--ink-mute)" stroke-width="1"/><line x1="${ML}" y1="${MT}" x2="${ML}" y2="${VH-MB}" stroke="var(--ink-mute)" stroke-width="1"/>`;
+  (o.xt||[]).forEach(t=>{const X=sx(t);g+=`<line x1="${X}" y1="${MT}" x2="${X}" y2="${VH-MB}" stroke="var(--rule)" stroke-width="1"/><text x="${X}" y="${VH-MB+14}" text-anchor="middle" font-size="10.5" font-family="var(--mono)" fill="var(--ink-soft)">${(o.xf||sci)(t)}</text>`;});
+  (o.yt||[]).forEach(t=>{const Y=sy(t);g+=`<line x1="${ML}" y1="${Y}" x2="${VW-MR}" y2="${Y}" stroke="var(--rule)" stroke-width="1"/><text x="${ML-5}" y="${Y+3.5}" text-anchor="end" font-size="10.5" font-family="var(--mono)" fill="var(--ink-soft)">${(o.yf||sci)(t)}</text>`;});
+  if(o.xl)g+=`<text x="${(ML+VW-MR)/2}" y="${VH-4}" text-anchor="middle" font-size="11.5" font-family="var(--label)" fill="var(--ink-soft)">${o.xl}</text>`;
+  if(o.yl)g+=`<text x="${ML+4}" y="${MT+10}" font-size="11.5" font-family="var(--label)" fill="var(--ink-soft)">${o.yl}</text>`;
+  const path=(pts)=>"M"+pts.map(p=>sx(p[0]).toFixed(1)+" "+sy(p[1]).toFixed(1)).join(" L");
+  return {sx,sy,g,path};
+}
+function niceTicks(a,b,n=4){const span=b-a,step0=span/n,mag=Math.pow(10,Math.floor(Math.log10(step0)));const step=[1,2,2.5,5,10].map(s=>s*mag).find(s=>span/s<=n)||10*mag;const out=[];for(let v=Math.ceil(a/step)*step;v<=b+1e-12;v+=step)out.push(+v.toPrecision(6));return out;}
+function decades(a,b){const out=[];for(let e=Math.ceil(Math.log10(a));e<=Math.floor(Math.log10(b));e++)out.push(Math.pow(10,e));return out;}
+const CV=c=>`var(--c-${c})`;
+const TXT=(x,y,s,col,anchor="start")=>`<text x="${x}" y="${y}" text-anchor="${anchor}" font-size="11" font-family="var(--label)" fill="${col}">${s}</text>`;
+const TYPES=[["ls1","LS-1 clear view",4.0,0,0.01],["ls2","LS-2 emerging",0.5,0,0.05],["ls3","LS-3 turning",0.3,0,0.10]];
+const PLAN_N=[571290.8,2856454.2,5712908.5];
+
+const CHARTS={
+ poisson:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Chance of seeing at most N events versus true rate"></svg>
+  <div class="ctl"><label for="v-pois">LS-3 encounters counted N</label><input type="range" id="v-pois" min="0" max="600" step="1" value="300"><output></output></div>
+  <div class="vout"></div><div class="cap">Robotaxi pilot: τ = 1,000 h. Curve: chance of counting at most N if the true rate were λ. Line: 1 − C_b = 0.625 %.</div>`,
+  draw(el){const N=+el.querySelector("input").value,tau=1000;el.querySelector("output").textContent=N;
+   const lu=poisUpper(N,ALPHA)/tau,lh=N/tau,x1=Math.max(lu*1.35,8/tau);
+   const f=frame({x0:0,x1:x1,y0:0,y1:1,xt:niceTicks(0,x1),yt:[0,0.25,0.5,0.75,1],xf:v=>+v.toPrecision(3),yf:v=>v,xl:"true rate λ (per hour)",yl:"P(X ≤ N | λτ)"});
+   const pts=[];for(let i=0;i<=180;i++){const l=x1*i/180;pts.push([l,poisCdf(N,l*tau)]);}
+   let g=f.g+`<rect x="${f.sx(lu)}" y="${MT}" width="${Math.max(0,f.sx(x1)-f.sx(lu))}" height="${VH-MT-MB}" fill="${CV("world")}" opacity=".08"/>`;
+   g+=`<line x1="${ML}" x2="${VW-MR}" y1="${f.sy(ALPHA)}" y2="${f.sy(ALPHA)}" stroke="${CV("conf")}" stroke-dasharray="4 3" stroke-width="1.5"/>`;
+   g+=`<path d="${f.path(pts)}" fill="none" stroke="${CV("world")}" stroke-width="2.2"/>`;
+   g+=`<line x1="${f.sx(lh)}" x2="${f.sx(lh)}" y1="${MT}" y2="${VH-MB}" stroke="${CV("world")}" stroke-dasharray="2 3"/><line x1="${f.sx(lu)}" x2="${f.sx(lu)}" y1="${MT}" y2="${VH-MB}" stroke="${CV("world")}" stroke-width="2"/>`;
+   g+=TXT(f.sx(lu)+5,MT+12,"λᵁ",CV("world"))+TXT(f.sx(lh)-4,MT+26,"N/τ",CV("world"),"end");
+   el.querySelector("svg").innerHTML=g;
+   el.querySelector(".vout").innerHTML=`Point estimate <b>${sci(lh)}</b> /h, upper bound <b>${sci(lu)}</b> /h${N?`, ratio <b>${(lu/lh).toFixed(2)}×</b>`:""}. Rates in the shaded area would make the count implausible. More events shrink the ratio towards 1: the 20,000 confirmatory hours give 0.310 for LS-3.`;}
+ },
+ zerofail:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Chance all runs pass versus true failure probability"></svg>
+  <div class="ctl"><label for="v-zf">LS-3 sim runs n</label><input type="range" id="v-zf" min="5" max="8" step="0.02" value="6.76"><output></output></div>
+  <div class="vout"></div><div class="cap">LS-3, w = 0.1, so n runs count like n/w real encounters. Curve: e^(−n·p/w). Dashed: 1 − C_b. Vertical dashes: allowed p* = 8.9·10⁻⁸, the same in every logical scenario.</div>`,
+  draw(el){const n=Math.pow(10,+el.querySelector("input").value),w=0.1,ps=8.884e-8;el.querySelector("output").textContent=sci(n,2);
+   const pu=LB*w/n;
+   const f=frame({x0:1e-10,x1:1e-5,y0:0,y1:1,logx:true,xt:decades(1e-10,1e-5),yt:[0,.25,.5,.75,1],yf:v=>v,xl:"true failure probability p",yl:"P(all n pass)"});
+   const pts=[];for(let i=0;i<=200;i++){const p=Math.pow(10,-10+5*i/200);pts.push([p,Math.exp(-n*p/w)]);}
+   const px=Math.min(Math.max(pu,1e-10),1e-5);
+   let g=f.g+`<rect x="${f.sx(px)}" y="${MT}" width="${Math.max(0,VW-MR-f.sx(px))}" height="${VH-MT-MB}" fill="${CV("sys")}" opacity=".08"/>`;
+   g+=`<line x1="${ML}" x2="${VW-MR}" y1="${f.sy(ALPHA)}" y2="${f.sy(ALPHA)}" stroke="${CV("conf")}" stroke-dasharray="4 3" stroke-width="1.5"/>`;
+   g+=`<line x1="${f.sx(ps)}" x2="${f.sx(ps)}" y1="${MT}" y2="${VH-MB}" stroke="${CV("req")}" stroke-dasharray="5 3" stroke-width="1.5"/>`+TXT(f.sx(ps)-4,MT+12,"p*",CV("req"),"end");
+   g+=`<path d="${f.path(pts)}" fill="none" stroke="${CV("sys")}" stroke-width="2.2"/><line x1="${f.sx(px)}" x2="${f.sx(px)}" y1="${MT}" y2="${VH-MB}" stroke="${CV("sys")}" stroke-width="2"/>`+TXT(f.sx(px)+4,MT+28,"pᵁ",CV("sys"));
+   el.querySelector("svg").innerHTML=g;const ok=pu<=ps*1.001;
+   el.querySelector(".vout").innerHTML=`Bound <b>${sci(pu)}</b>. ${ok?`Below the allowed <b>8.9·10⁻⁸</b>: enough LS-3 runs.`:`Above the allowed <b>8.9·10⁻⁸</b>: the plan's 5.7·10⁶ runs are needed.`}`;}
+ },
+ is:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Real-world density, test density and failure region"></svg>
+  <div class="ctl"><label for="v-is">Shift tests towards danger</label><input type="range" id="v-is" min="0" max="5" step="0.1" value="2.6"><output></output></div>
+  <div class="vout"></div><div class="cap">Illustration with one criticality parameter x (say, how late the pedestrian is detected). Failures for x > 3.5. q = 0.9·N(μ,1) + 0.1·p.</div>`,
+  draw(el){const mu=+el.querySelector("input").value,t=3.5;el.querySelector("output").textContent="μ = "+mu.toFixed(1);
+   const q=x=>0.9*phi(x-mu)+0.1*phi(x);let wmax=0;for(let x=t;x<=9;x+=0.01)wmax=Math.max(wmax,phi(x)/q(x));
+   const f=frame({x0:-4,x1:7,y0:0,y1:0.42,xt:[-4,-2,0,2,4,6],yt:[0,0.2,0.4],xf:v=>v,yf:v=>v,xl:"scenario parameter x",yl:"density"});
+   const pp=[],qq=[];for(let i=0;i<=220;i++){const x=-4+11*i/220;pp.push([x,phi(x)]);qq.push([x,q(x)]);}
+   let g=f.g+`<rect x="${f.sx(t)}" y="${MT}" width="${VW-MR-f.sx(t)}" height="${VH-MT-MB}" fill="${CV("sys")}" opacity=".12"/>`+TXT(VW-MR-4,MT+12,"f(x) = 1",CV("sys"),"end");
+   g+=`<path d="${f.path(pp)}" fill="none" stroke="${CV("world")}" stroke-width="2.2"/><path d="${f.path(qq)}" fill="none" stroke="${CV("test")}" stroke-width="2.2" stroke-dasharray="6 4"/>`;
+   g+=TXT(f.sx(-0.3),f.sy(0.405),"p(x)",CV("world"),"end")+TXT(Math.min(f.sx(mu)+6,VW-60),f.sy(0.37),"q(x)",CV("test"));
+   el.querySelector("svg").innerHTML=g;
+   el.querySelector(".vout").innerHTML=`Largest weight where failures are possible: <b>w = ${sci(wmax)}</b>. Each run counts like <b>${sci(1/wmax)}</b> real encounters, so the run count shrinks by that factor. Push μ past the failure region and w rises again; the defensive 10 % keeps it bounded.`;}
+ },
+ strata:{
+  html:`<svg viewBox="0 0 ${VW} 168" role="img" aria-label="Encounter share and budget share per logical scenario under three rules"></svg>
+  <div class="vout"></div><div class="cap">Robotaxi, three logical scenarios. Each bar is 100 %.</div>`,
+  draw(el){const lu=[4.16,0.559,0.346],S=lu.reduce((a,b)=>a+b,0);const rows=[["Encounters",lu.map(v=>v/S)],["Equal protection",lu.map(v=>v/S)],["Equal split",[1/3,1/3,1/3]]];const cols=["world","test","sys"];
+   let g="";rows.forEach(([nm,v],r)=>{const y=14+r*50;let x=110;g+=TXT(8,y+20,nm,"var(--ink-soft)");v.forEach((sh,i)=>{const w=sh*(VW-120);g+=`<rect x="${x}" y="${y}" width="${w}" height="30" fill="${CV(cols[i])}" opacity="${0.35+0.25*i}" stroke="var(--card)" stroke-width="1.5"/>`;if(w>30)g+=`<text x="${x+w/2}" y="${y+19}" text-anchor="middle" font-size="11" font-family="var(--mono)" fill="var(--ink)">${Math.round(sh*100)}%</text>`;x+=w;});});
+   g+=TXT(110,163,"LS-1 clear",CV("world"))+TXT(205,163,"LS-2 emerging",CV("test"))+TXT(290,163,"LS-3 turning",CV("sys"));
+   el.querySelector("svg").innerHTML=g;
+   el.querySelector(".vout").innerHTML=`Under equal protection the budget shares equal the encounter shares, so every encounter has the same allowed failure probability. An equal split gives the rare turning scenario five times its share of encounters, which means 12× less protection per turning encounter than per clear-view encounter.`;}
+ },
+ rules:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Allowed failure probability per encounter under three allocation rules"></svg>
+  <div class="ctl"><label for="v-ru">LS-3 human share</label><input type="range" id="v-ru" min="0.05" max="0.6" step="0.01" value="0.15"><output></output></div>
+  <div class="vout"></div><div class="cap">Allowed failure probability per encounter (log scale) for LS-1, LS-2, LS-3 under three rules. B = 4.5·10⁻⁷ /h. Lower is stricter.</div>`,
+  draw(el){const h3=+el.querySelector("input").value;el.querySelector("output").textContent=h3.toFixed(2);
+   const lu=[4.16,0.559,0.346],B=4.5e-7,S=lu.reduce((a,b)=>a+b,0);const rest=1-h3,hs=[0.5/0.85*rest,0.35/0.85*rest,h3];
+   const rules=[["equal protection",lu.map(v=>B*v/S)],["∝ human risk",hs.map(v=>B*v)],["equal split",[B/3,B/3,B/3]]];
+   const ps=rules.map(([n,b])=>b.map((x,i)=>x/lu[i]));
+   const f=frame({x0:0,x1:3,y0:1e-8,y1:2e-6,logy:true,yt:[1e-8,1e-7,1e-6],xt:[],yl:"allowed p* per encounter"});
+   let g=f.g;const cols=["world","test","sys"];
+   ps.forEach((row,r)=>{const cx=f.sx(r+0.5);row.forEach((p,i)=>{const x=cx-33+i*23;g+=`<rect x="${x}" y="${f.sy(p)}" width="20" height="${f.sy(1e-8)-f.sy(p)}" fill="${CV(cols[i])}" opacity="${0.45+0.2*i}"/>`;});
+     const ratio=Math.max(...row)/Math.min(...row);g+=TXT(cx,VH-MB+15,rules[r][0],"var(--ink-soft)","middle")+TXT(cx,VH-MB+28,`ratio ${ratio.toFixed(1)}`,"var(--ink-mute)","middle");});
+   el.querySelector("svg").innerHTML=g;
+   el.querySelector(".vout").innerHTML=`Equal protection gives every logical scenario the same allowed failure probability, <b>${sci(ps[0][0])}</b> per encounter. The protection ratio (largest ÷ smallest) is <b>${(Math.max(...ps[1])/Math.min(...ps[1])).toFixed(1)}</b> for the human-proportional rule and <b>${(Math.max(...ps[2])/Math.min(...ps[2])).toFixed(1)}</b> for the equal split. Test cost does not appear in any rule.`;}
+ },
+ eproc:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Event count that raises the alarm versus years of operation"></svg>
+  <div class="ctl"><label for="v-ep">Alternative λ₁ = factor × R_HB</label><input type="range" id="v-ep" min="1.5" max="6" step="0.1" value="2"><output></output></div>
+  <div class="vout"></div><div class="cap">730,000 fleet hours per year, R_HB = 5·10⁻⁷ /h, alarm at E ≥ 20. Step line: events needed for the alarm; dashed: expected events if the car is exactly at the limit.</div>`,
+  draw(el){const a=+el.querySelector("input").value;el.querySelector("output").textContent="×"+a.toFixed(1);
+   const l0=5e-7,H=730000,K=t=>Math.ceil((Math.log(20)+(a-1)*l0*t*H)/Math.log(a));
+   const ymax=Math.max(K(5)+2,4);const f=frame({x0:0,x1:5,y0:0,y1:ymax,xt:[0,1,2,3,4,5],yt:niceTicks(0,ymax,4),xf:v=>v,yf:v=>v,xl:"years of fleet operation",yl:"events"});
+   const st=[];for(let i=1;i<=250;i++){const t=5*i/250;st.push([t,K(t)]);}
+   let g=f.g+`<path d="${f.path(st)}" fill="none" stroke="${CV("conf")}" stroke-width="2.2"/><path d="${f.path([[0,0],[5,5*l0*H]])}" fill="none" stroke="${CV("world")}" stroke-width="1.8" stroke-dasharray="5 4"/>`;
+   el.querySelector("svg").innerHTML=g;
+   el.querySelector(".vout").innerHTML=`Alarm at <b>${K(0.5)}</b> events within half a year, <b>${K(1)}</b> within one year, <b>${K(2)}</b> within two, <b>${K(5)}</b> within five. At the limit the fleet expects only <b>${(l0*H).toFixed(3)}</b> events per year. A larger λ₁ alarms earlier on strong violations but reacts more slowly to mild ones.`;}
+ },
+ gauss:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Simulator error distribution and margin"></svg>
+  <div class="ctl"><label for="v-ga">Safety factor z</label><input type="range" id="v-ga" min="1" max="7" step="0.1" value="6.5"><output></output></div>
+  <div class="vout"></div><div class="cap">Simulator error in units of σ (bias removed). A real failure can hide behind a sim pass only in the shaded tail beyond δ.</div>`,
+  draw(el){const z=+el.querySelector("input").value;el.querySelector("output").textContent="z = "+z.toFixed(1);
+   const f=frame({x0:-4,x1:7.5,y0:0,y1:0.42,xt:[-4,-2,0,2,4,6],yt:[0,0.2,0.4],xf:v=>v+"σ",yf:v=>v,xl:"simulator error e",yl:"density"});
+   const pts=[],tail=[[z,0]];for(let i=0;i<=230;i++){const x=-4+11.5*i/230;pts.push([x,phi(x)]);if(x>=z)tail.push([x,phi(x)]);}tail.push([7.5,0]);
+   let g=f.g+`<path d="${f.path(tail)} Z" fill="${CV("sys")}" opacity=".35"/><path d="${f.path(pts)}" fill="none" stroke="${CV("test")}" stroke-width="2.2"/>`;
+   g+=`<line x1="${f.sx(z)}" x2="${f.sx(z)}" y1="${MT}" y2="${VH-MB}" stroke="${CV("test")}" stroke-width="2"/>`+TXT(f.sx(z)+4,MT+12,"δ",CV("test"));
+   el.querySelector("svg").innerHTML=g;const pm=Phi(-z),p1=8.884e-8,dm=0.05+z*0.173;
+   el.querySelector(".vout").innerHTML=`δ = <b>${dm.toFixed(2)} m</b>. Miss probability <b>Φ(−z) = ${sci(pm)}</b>, which is <b>${sci(pm/p1*100,1)} %</b> of the allowed p* (8.9·10⁻⁸, the same in every logical scenario). ${pm<0.01*p1?"Negligible.":"Not negligible: it eats the daylight budget."}`;}
+ },
+ disc:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Upper bound on the rate of new situations versus hours driven"></svg>
+  <div class="ctl"><label for="v-di">Hours without a new type</label><input type="range" id="v-di" min="3" max="6" step="0.02" value="4.3"><output></output></div>
+  <div class="vout"></div><div class="cap">Bound λ_newᵁ = L/τ with L = 5.08 (log–log). Reserve b_unk = 5·10⁻⁸ /h.</div>`,
+  draw(el){const tau=Math.pow(10,+el.querySelector("input").value);el.querySelector("output").textContent=sci(tau,1)+" h";
+   const f=frame({x0:1e3,x1:1e6,y0:1e-6,y1:1e-2,logx:true,logy:true,xt:decades(1e3,1e6),yt:decades(1e-6,1e-2),xl:"hours driven τ",yl:"λ_newᵁ (per h)"});
+   const lu=LB/tau;let g=f.g+`<path d="${f.path([[1e3,LB/1e3],[1e6,LB/1e6]])}" fill="none" stroke="${CV("world")}" stroke-width="2.2"/><circle cx="${f.sx(tau)}" cy="${f.sy(lu)}" r="5" fill="${CV("world")}"/>`;
+   el.querySelector("svg").innerHTML=g;const pn=5e-8/lu;
+   el.querySelector(".vout").innerHTML=`Bound <b>${sci(lu)}</b> /h. To fit the reserve, the failure probability in unknown situations must be at most <b>${sci(Math.min(pn,1))}</b>. The fallback argument has to deliver that.`;}
+ },
+ post:{
+  html:`<svg viewBox="0 0 ${VW} ${VH}" role="img" aria-label="Posterior density of the rate after zero events"></svg>
+  <div class="vout"></div><div class="cap">Flat prior, zero events in τ hours. Posterior density τ·e^(−λτ). Shaded: 95 % credible region.</div>`,
+  draw(el){const f=frame({x0:0,x1:6,y0:0,y1:1.05,xt:[0,1,2,3,4,5,6],yt:[0,0.5,1],xf:v=>v+"/τ",yf:v=>v,xl:"rate λ in units of 1/τ",yl:"density × 1/τ"});
+   const pts=[],sh=[[0,0]];for(let i=0;i<=160;i++){const u=6*i/160;pts.push([u,Math.exp(-u)]);if(u<=LN20)sh.push([u,Math.exp(-u)]);}sh.push([LN20,0]);
+   let g=f.g+`<path d="${f.path(sh)} Z" fill="${CV("conf")}" opacity=".18"/><path d="${f.path(pts)}" fill="none" stroke="${CV("world")}" stroke-width="2.2"/><line x1="${f.sx(LN20)}" x2="${f.sx(LN20)}" y1="${MT}" y2="${VH-MB}" stroke="${CV("conf")}" stroke-width="2"/>`+TXT(f.sx(LN20)+4,MT+12,"95 % at 3.0/τ",CV("conf"));
+   el.querySelector("svg").innerHTML=g;
+   el.querySelector(".vout").innerHTML=`P(λ ≤ ln 20/τ | data) = 0.95, the same 3/τ as the frequentist rule. For the robotaxi naive target: 3.0/(5·10⁻⁷) = 6.0·10⁶ h either way. A prior from the last release would shift this curve left.`;}
+ },
+ stop:{
+  html:`<svg viewBox="0 0 ${VW} 120" role="img" aria-label="Stacked risk bounds against the tolerable rate"></svg>
+  <div class="ctl"><label for="v-sd">Confirmatory hours τ</label><input type="range" id="v-sd" min="3" max="5" step="0.02" value="4.3"><output></output></div>
+  <div class="ctl"><label for="v-sl">Failures in</label><select id="v-sl"><option value="0">LS-1 clear view</option><option value="1">LS-2 emerging</option><option value="2">LS-3 turning</option></select><input type="range" id="v-sj" min="0" max="6" step="1" value="0"><output></output></div>
+  <div class="vout"></div><div class="cap">Segments: LS-1, LS-2, LS-3, unknown. Black line: R_HB = 5·10⁻⁷ /h. Runs fixed by the plan.</div>`,
+  draw(el){const tau=Math.pow(10,+el.querySelector("#v-sd").value),k=+el.querySelector("#v-sl").value,j=+el.querySelector("#v-sj").value;const outs=el.querySelectorAll("output");outs[0].textContent=sci(tau,1)+" h";outs[1].textContent=j;
+   const terms=TYPES.map((t,i)=>{const Nk=Math.round(t[2]*tau);const lu=poisUpper(Nk,ALPHA)/tau;const jj=i===k?j:0;const pu=poisUpper(jj,ALPHA)*t[4]/PLAN_N[i];return lu*pu;});terms.push(LB/tau*1e-4);
+   const tot=terms.reduce((a,b)=>a+b,0),M=Math.max(8e-7,tot*1.05),Wd=VW-24;let x=12,g="";const cols=["world","test","sys","conf"];
+   terms.forEach((v,i)=>{const w=v/M*Wd;g+=`<rect x="${x}" y="30" width="${Math.max(w,0)}" height="40" fill="${CV(cols[i])}" opacity=".7" stroke="var(--card)"/>`;x+=w;});
+   const tx=12+5e-7/M*Wd;g+=`<line x1="${tx}" x2="${tx}" y1="18" y2="82" stroke="var(--ink)" stroke-width="2.5"/>`+TXT(tx,14,"R_HB","var(--ink)","middle")+`<text x="12" y="100" font-size="11" font-family="var(--mono)" fill="var(--ink-soft)">bound ${sci(tot)} /h</text>`;
+   el.querySelector("svg").innerHTML=g;const big=terms.indexOf(Math.max(...terms));
+   el.querySelector(".vout").innerHTML=(tot<=5e-7?`<b class="cat-req">Shown</b>: ${Math.round(tot/5e-7*100)} % of the tolerable rate.`:`<b style="color:var(--bad)">Not shown</b>: ${(tot/5e-7).toFixed(2)}× the tolerable rate.`)+` Largest term: <b>${["LS-1","LS-2","LS-3","unknown"][big]}</b>.${j?" Topping up runs after seeing a failure is not allowed; analyse it, fix the function and run a new frozen campaign.":""}`;}
+ },
+ bonf:{
+  html:`<div class="ctl"><label for="v-bo">Bounds that must hold together m</label><input type="range" id="v-bo" min="1" max="40" step="1" value="8"><output></output></div><div class="vout"></div>`,
+  draw(el){const m=+el.querySelector("input").value;el.querySelector("output").textContent=m;const cp=1-0.05/m,L=Math.log(20*m);
+   el.querySelector("div.vout").innerHTML=`Each bound at <b>${(cp*100).toFixed(3)} %</b>. The zero-failure factor becomes <b>L = ln(${20*m}) = ${L.toFixed(2)}</b> instead of 3.00, so every campaign needs <b>${(L/LN20).toFixed(2)}×</b> as many runs or hours. The cost grows only logarithmically with m.`;}
+ }
+};
+
+/* ---------- build the canvas ---------- */
+const world=document.getElementById("world"),stage=document.getElementById("stage"),svg=document.getElementById("edges"),panel=document.getElementById("panel");
+const byId={};
+for(const z in ZONES){const d=document.createElement("div");d.className="zone "+ZONES[z].cls;d.innerHTML=`<div class="zl">${ZONES[z].n}</div><div class="zd">${ZONES[z].d}</div>`;world.insertBefore(d,svg);ZONES[z].el=d;}
+N.forEach(n=>{const d=document.createElement("div");d.className="node "+ZONES[n.z].cls+(n.risk?" risk":"")+(n.z==="math"?" mathn":"");d.style.left=n.x+"px";d.style.top=n.y+"px";d.dataset.id=n.id;d.tabIndex=0;d.setAttribute("role","button");d.setAttribute("aria-label",n.t+": "+n.q);
+  d.innerHTML=`<div class="kind">${ISO[n.id]?"ISO 21448 "+ISO[n.id]:ZONES[n.z].n}<span class="lv lv-${PLAIN[n.id][0]}">${LV[PLAIN[n.id][0]]}</span></div><div class="nt">${n.t}</div><div class="nq">${n.q}</div><div class="nm">${tex(n.card)}</div><div class="nsrc">Source: ${SRC[n.id][0]}</div>${n.ev?`<div class="chip"><b>Robotaxi</b>${n.ev}</div>`:""}`;world.appendChild(d);n.el=d;byId[n.id]=n;});
+let WB=[0,0,1,1];
+function layout(){
+  N.forEach(n=>{n.w=n.el.offsetWidth;n.h=n.el.offsetHeight;n.cx=n.x+n.w/2;n.cy=n.y+n.h/2;});
+  for(const z in ZONES){const ms=N.filter(n=>n.z===z);const p=34;const x0=Math.min(...ms.map(n=>n.x))-p,y0=Math.min(...ms.map(n=>n.y))-p-34,x1=Math.max(...ms.map(n=>n.x+n.w))+p,y1=Math.max(...ms.map(n=>n.y+n.h))+p;
+    Object.assign(ZONES[z].el.style,{left:x0+"px",top:y0+"px",width:(x1-x0)+"px",height:(y1-y0)+"px"});ZONES[z].b=[x0,y0,x1,y1];}
+  svg.innerHTML="";document.querySelectorAll(".elab").forEach(l=>l.remove());
+  E.forEach(e=>{const a=byId[e[0]],b=byId[e[1]];const dx=b.cx-a.cx,dy=b.cy-a.cy;let c1,c2;
+    if(Math.abs(dy)>Math.abs(dx)*0.6){c1=[a.cx,a.cy+dy*0.5];c2=[b.cx,b.cy-dy*0.5];}else{c1=[a.cx+dx*0.5,a.cy];c2=[b.cx-dx*0.5,b.cy];}
+    const p=document.createElementNS("http://www.w3.org/2000/svg","path");p.setAttribute("d",`M${a.cx} ${a.cy} C${c1[0]} ${c1[1]} ${c2[0]} ${c2[1]} ${b.cx} ${b.cy}`);if(e[4])p.setAttribute("class","math");svg.appendChild(p);e.path=p;
+    const t=e[4]?0.72:0.5,u=1-t;const mx=u*u*u*a.cx+3*u*u*t*c1[0]+3*u*t*t*c2[0]+t*t*t*b.cx,my=u*u*u*a.cy+3*u*u*t*c1[1]+3*u*t*t*c2[1]+t*t*t*b.cy;
+    const l=document.createElement("div");l.className="elab"+(e[4]?" math":"");l.innerHTML=tex(e[2])+(e[3]?`<span class="ev">${e[3]}</span>`:"");l.style.left=mx+"px";l.style.top=my+"px";world.appendChild(l);e.lab=l;});
+  const all=Object.values(ZONES).map(z=>z.b);WB=[Math.min(...all.map(b=>b[0])),Math.min(...all.map(b=>b[1])),Math.max(...all.map(b=>b[2])),Math.max(...all.map(b=>b[3]))];
+  svg.setAttribute("width",WB[2]+50);svg.setAttribute("height",WB[3]+50);
+}
+
+/* ---------- camera ---------- */
+let view={x:0,y:0,s:1};
+function apply(){world.style.transform=`translate(${view.x}px,${view.y}px) scale(${view.s})`;world.classList.toggle("far",view.s<0.36);}
+const clampS=s=>Math.max(0.1,Math.min(2.5,s));
+function zoomAt(f,px,py){const s=clampS(view.s*f),k=s/view.s;view.x=px-(px-view.x)*k;view.y=py-(py-view.y)*k;view.s=s;apply();}
+const reduce=matchMedia("(prefers-reduced-motion: reduce)").matches;let animId=0;
+function flyTo(t,anim=true){cancelAnimationFrame(animId);if(!anim||reduce){view={...t};apply();return;}const s0={...view},t0=performance.now();
+  const step=now=>{let u=Math.min(1,(now-t0)/480);u=1-Math.pow(1-u,3);view={x:s0.x+(t.x-s0.x)*u,y:s0.y+(t.y-s0.y)*u,s:s0.s+(t.s-s0.s)*u};apply();if(u<1)animId=requestAnimationFrame(step);};animId=requestAnimationFrame(step);}
+const mobile=()=>innerWidth<=760;
+function fit(anim=true){const r=stage.getBoundingClientRect();const pw=(!panel.hidden&&!mobile())?460:0,pad=36;
+  const s=clampS(Math.min((r.width-pw-2*pad)/(WB[2]-WB[0]),(r.height-2*pad)/(WB[3]-WB[1])));
+  flyTo({s,x:pad+(r.width-pw-2*pad-(WB[2]-WB[0])*s)/2-WB[0]*s,y:pad+(r.height-2*pad-(WB[3]-WB[1])*s)/2-WB[1]*s},anim);}
+function focusNode(n){const r=stage.getBoundingClientRect();const s=clampS(Math.max(view.s,mobile()?0.65:0.8));const aw=mobile()?r.width:r.width-460,ah=mobile()?r.height*0.38:r.height;flyTo({s,x:aw/2-n.cx*s,y:ah/2-n.cy*s});}
+
+/* ---------- panel ---------- */
+let selected=null,tourIdx=-1;
+function linkHover(root){
+  const set=(id,on)=>root.querySelectorAll(`[data-s="${id}"]`).forEach(e=>e.classList.toggle("hl",on));
+  root.querySelectorAll("[data-s]").forEach(el=>{const id=el.dataset.s;el.addEventListener("mouseenter",()=>set(id,true));el.addEventListener("mouseleave",()=>set(id,false));
+    el.addEventListener("click",ev=>{ev.stopPropagation();const on=!el.classList.contains("hl");root.querySelectorAll(".hl").forEach(x=>x.classList.remove("hl"));if(on){set(id,true);const row=root.querySelector(`tr[data-s="${id}"]`);if(row&&el.tagName!=="TR")row.scrollIntoView({block:"nearest",behavior:reduce?"auto":"smooth"});}});});
+}
+function connButtons(list,id){return list.map(e=>{const o=byId[e[0]===id?e[1]:e[0]];return `<button data-go="${o.id}" class="${ZONES[o.z].cls}"><span class="dot"></span>${o.t}<span class="cl">${tex(e[2])}</span></button>`;}).join("");}
+function lessonHTML(id){const L=LESSON[id],n=byId[id];if(!L)return "";
+  const pre=L.pre.length?`<p class="mathlead">Read first: ${L.pre.map(p=>`<button class="prelink" data-go="${p}">${byId[p].t}</button>`).join(" ")}</p>`:`<p class="mathlead">Needs only school maths.</p>`;
+  return `<h3>Step by step</h3>${pre}<ol class="lsteps">${L.steps.map(st=>`<li><p>${st[0]}</p>${st[1]?`<div class="disp lsd">${tex(st[1],true)}</div>`:""}</li>`).join("")}</ol>
+  <h3>The result</h3><div class="disp">${tex(n.big,true)}</div>${srcHTML(id)}`;}
+function checkHTML(id){const L=LESSON[id];if(!L)return "";
+  return `<h3>Check yourself</h3><div class="check"><p>${L.check[0]}</p><details><summary>Show answer</summary><p>${L.check[1]}</p></details></div>
+  <div class="assume"><strong>Common mistake</strong>${L.pitfall}</div>`;}
+function select(id,{fly=true}={}){
+  selected=id;const n=byId[id];const es=E.filter(e=>e[0]===id||e[1]===id);const nb=new Set([id]);es.forEach(e=>{nb.add(e[0]);nb.add(e[1]);});
+  N.forEach(m=>{m.el.classList.toggle("sel",m.id===id);m.el.classList.toggle("dim",!nb.has(m.id));});
+  E.forEach(e=>{const hit=e[0]===id||e[1]===id;e.path.classList.toggle("hi",hit);e.path.classList.toggle("dim",!hit);e.lab.classList.toggle("hi",hit);e.lab.classList.toggle("dim",!hit);});
+  const tag=document.getElementById("pTag");tag.textContent=ZONES[n.z].n+(ISO[id]?" · ISO 21448 "+ISO[id]:"");tag.className="tag "+ZONES[n.z].cls;tag.style.color="";
+  document.getElementById("pTitle").textContent=n.t;
+  const ids=symsIn(n.big+(n.ex||""));
+  const rows=ids.map(s=>`<tr data-s="${s}" style="--rc:var(--c-${SYM[s].c})"><td>${tex(S(s))}</td><td>${SYM[s].n}</td><td class="src">${SYM[s].s}</td></tr>`).join("");
+  const steps=es.filter(e=>!e[4]),maths=es.filter(e=>e[4]);
+  const ch=n.chart?CHARTS[n.chart]:null;
+  const pl=PLAIN[id];
+  document.getElementById("pBody").innerHTML=`<p class="dek">${n.q}<span class="lvtag">${LV[pl[0]]}</span></p>
+    ${n.who?`<div class="who"><span><b>Who</b>${n.who[0]}</span><span><b>When</b>${n.who[1]}</span></div>`:""}
+    <h3>In plain words</h3><div class="plainbox">${pl[1]}</div>
+    ${n.ev?`<h3>In the robotaxi example</h3><div class="exbox"><div class="exl">${n.ev}</div><p>${n.exT||""}</p>${n.ex?`<div class="disp ex">${tex(n.ex,true)}</div>`:""}<p style="margin-top:8px"><a href="${EXURL}#${n.step}">Read this step in the worked example →</a></p></div>`:""}
+    ${n.z==="math"?lessonHTML(id):`<h3>The maths</h3><p class="mathlead">${pl[0]==="b"?"The same idea as a formula. Coloured letters are explained in the table below.":"Optional if the plain version made sense. Coloured letters are explained below."}</p>
+    <p>${n.words}</p><div class="disp">${tex(n.big,true)}</div>
+    ${rows?`<h3>Every symbol</h3><table class="syms">${rows}</table>`:""}
+    ${srcHTML(id)}
+    ${maths.length?`<h3>Maths you need for this step</h3><p class="mathlead">Each opens a step-by-step lesson that starts from school maths.</p><div class="conn">${connButtons(maths,id)}</div>`:""}`}
+    ${ch?`<h3>Try it</h3><div class="viz" id="viz">${ch.html}</div>`:""}
+    ${n.z==="math"?checkHTML(id):""}
+    <h3>Why it matters</h3><p>${n.why}</p>
+    ${n.assume?`<div class="assume"><strong>Assumption to defend</strong>${n.assume}</div>`:""}
+    ${steps.length?`<h3>${n.z==="math"?"Used in these steps":"Connected steps"}</h3><div class="conn">${connButtons(steps,id)}</div>`:""}
+    ${n.z==="math"&&maths.length?`<h3>Related foundations</h3><div class="conn">${connButtons(maths,id)}</div>`:""}`;
+  const pb=document.getElementById("pBody");pb.scrollTop=0;linkHover(pb);
+  if(ch){const v=document.getElementById("viz");ch.draw(v);v.querySelectorAll("input,select").forEach(i=>{i.addEventListener("input",()=>ch.draw(v));i.addEventListener("change",()=>ch.draw(v));});}
+  panel.hidden=false;document.getElementById("hint").hidden=true;
+  const tb=document.getElementById("tourBar");
+  if(tourIdx>=0&&ACT[tourIdx]===id){tb.hidden=false;document.getElementById("tourStep").textContent=`${ACT===MATHPATH?"Maths path":"Tour"} · ${tourIdx+1} of ${ACT.length}`;document.getElementById("tourPrev").disabled=tourIdx===0;document.getElementById("tourNext").textContent=tourIdx===ACT.length-1?"Finish":"Next";}
+  else{tourIdx=-1;tb.hidden=true;}
+  if(fly)focusNode(n);
+}
+function clearHi(){N.forEach(m=>m.el.classList.remove("sel","dim"));E.forEach(e=>{e.path.classList.remove("hi","dim");e.lab.classList.remove("hi","dim");});}
+function showKey(){
+  selected=null;tourIdx=-1;clearHi();
+  const tag=document.getElementById("pTag");tag.className="tag";tag.style.color="var(--ink-soft)";tag.textContent="Legend";document.getElementById("pTitle").textContent="Reading the map";
+  let h=`<p class="dek">Every symbol has one colour everywhere: on cards, connections, equations and plots.</p><p>Colour says what kind of quantity a symbol is, so you can read an equation's structure before its letters. A <span class="w cat-world">world</span> rate times a <span class="w cat-sys">system</span> probability gives the risk; a <span class="w cat-req">requirement</span> divided by a <span class="w cat-world">world</span> rate gives another requirement.</p><div class="keygrid">`;
+  for(const c in CAT){const ss=Object.keys(SYM).filter(s=>SYM[s].c===c);h+=`<div class="keycat" style="--rc:var(--c-${c})"><div class="kn">${CAT[c].n}</div><div class="kd">${CAT[c].d}</div><div style="font-size:18px;margin-top:4px;line-height:1.9">${ss.map(s=>tex(S(s))).join(" &nbsp; ")}</div></div>`;}
+  h+=`<div class="keycat" style="--rc:var(--c-ex)"><div class="kn">Robotaxi example</div><div class="kd">Orange chips and edge numbers: one hazardous behaviour worked through the whole map.</div></div>`;
+  h+=`<div class="keycat" style="--rc:var(--c-math)"><div class="kn">Mathematical foundations</div><div class="kd">Bottom zone. Dotted lines rise to every step that uses the result.</div></div>`;
+  h+=`</div><h3>Layout</h3><p>Far left: the hazard analysis (HARA) and the scenarios derived from it. Top: what you demand. Centre: the one unknown rate. Below it, left and right: its two factors, world and system. Then the evidence for each. Right: how evidence becomes a claim. Bottom: the mathematics underneath all of it. Zoom out to see only the questions; zoom in to see the maths.</p>`;
+  document.getElementById("pBody").innerHTML=h;document.getElementById("tourBar").hidden=true;panel.hidden=false;document.getElementById("hint").hidden=true;
+}
+function showPrimer(){
+  selected=null;tourIdx=-1;clearHi();
+  const tag=document.getElementById("pTag");tag.className="tag";tag.style.color="var(--c-req)";tag.textContent="Start here";document.getElementById("pTitle").textContent="Six ideas you need";
+  document.getElementById("pBody").innerHTML=`<div class="primer"><p class="dek">Everything on this map uses only these six ideas. Each takes a minute.</p>
+  <div class="idea"><b class="h">1 · Reading very small numbers</b>Safety targets are tiny, so they are written as powers of ten. The small number up top says how many places the decimal point moves.
+  <table><tr><th>Written</th><th>Decimal</th><th>In words</th></tr>
+  <tr><td>10⁻³</td><td>0.001</td><td>1 in a thousand</td></tr>
+  <tr><td>10⁻⁶</td><td>0.000001</td><td>1 in a million</td></tr>
+  <tr><td>10⁻⁷</td><td>0.0000001</td><td>1 in ten million</td></tr>
+  <tr><td>5·10⁻⁷ /h</td><td>0.0000005 per hour</td><td>once every 2 million hours</td></tr></table>
+  The trick for rates: 1 divided by the rate is the waiting time. 1 ÷ 5·10⁻⁷ = 2,000,000 hours.</div>
+  <div class="idea"><b class="h">2 · Rates and chances</b>A <i>rate</i> counts per hour: “4 crossings per hour”. A <i>chance</i> is per event: “fails in 1 of 10 million crossings”. Multiply them and you get a new rate: 4 × 1/10,000,000 = 4 failures per 10 million hours. The whole map rests on this one multiplication.</div>
+  <div class="idea"><b class="h">3 · Chains of chances multiply</b>Harm needs several things to go wrong in a row. Half the time a pedestrian is really there, half of those cannot step back, 8 in 10 collisions injure: 0.5 × 0.5 × 0.8 = 0.2, so 1 mistake in 5 hurts someone.</div>
+  <div class="idea"><b class="h">4 · You cannot measure “zero”, only bound it</b>Seeing no failures does not prove there are none. It proves they are rare. The <i>rule of three</i>: if nothing happened in a stretch of n tries (or hours), the rate is very likely below 3 ÷ n. Why 3? If you expected 3 events, seeing none happens only 5 % of the time.</div>
+  <div class="idea"><b class="h">5 · “95 % confident” and upper bounds</b>Because counts vary by luck, we never use the plain average. We use an <i>upper bound</i>: the most pessimistic value that still fits the data. “95 % confident” means this way of calculating lands above the true value at least 95 times in 100.</div>
+  <div class="idea"><b class="h">6 · Test the dangerous cases more, then weigh them less</b>Most crossings are easy. Testing them all wastes effort. So the dangerous ones are tested more often than they happen, and each such result counts for less, like a survey that over-samples a small town and weights its answers down.</div>
+  <h3>How to read the map</h3><p>Every card names the ISO 21448 clause it belongs to, and the guided tour follows the clauses in order, from the specification (Cl. 5) to the operation phase (Cl. 13). Far left, top: the specification and hazard analysis (HARA) that say what can go wrong. Far left, middle: the scenarios that turn hazardous events into tests. Top: what we demand. Centre: the one true rate nobody can see. Below it, left: how often things happen on real roads. Right: how often the car fails when they do. Then the evidence for each, how evidence becomes a claim, and at the very bottom the maths underneath. Each card shows a difficulty label; “basic” cards need nothing beyond these six ideas.</p>
+  <h3>Words used on the map</h3><dl>
+  <dt>ODD</dt><dd>Operational design domain: the roads, speeds, times and weather the robotaxi is allowed to drive in.</dd>
+  <dt>Hazardous behaviour</dt><dd>What the vehicle does wrong, described without a situation: does not yield, unintended braking, acceleration or steering, loss of braking, steering or propulsion.</dd>
+  <dt>Operational situation</dt><dd>The setting the vehicle is in, such as approaching a zebra crossing with a pedestrian about to cross.</dd>
+  <dt>Hazardous event</dt><dd>A hazardous behaviour in an operational situation where someone is exposed, e.g. not yielding while a pedestrian steps onto a zebra crossing.</dd>
+  <dt>Exposure</dt><dd>How often a situation occurs, per hour of driving.</dd>
+  <dt>Encounter</dt><dd>One occurrence of a situation, such as one crossing with a pedestrian.</dd>
+  <dt>Triggering condition</dt><dd>A circumstance that makes the system struggle: darkness, occlusion, rain.</dd>
+  <dt>MECE</dt><dd>Mutually exclusive, collectively exhaustive: categories that do not overlap and leave nothing out.</dd>
+  <dt>Validation target</dt><dd>How much testing is needed, such as “660,000 night runs with no failure”.</dd>
+  <dt>Proving ground</dt><dd>A closed test track, here with a dummy pedestrian.</dd>
+  <dt>Assessor</dt><dd>An independent expert (for example from TÜV) who checks the argument.</dd>
+  <dt>Release</dt><dd>One frozen version of the car's software. All evidence must come from the same one.</dd></dl>
+  <h3>Reading the notation</h3><table class="notation">
+  <tr><td>Σ<sub>k</sub></td><td>Add up over all k. Σ<sub>k</sub> λ<sub>k</sub> p<sub>k</sub> means λ₁p₁ + λ₂p₂ + λ₃p₃.</td></tr>
+  <tr><td>∫ … dx</td><td>Add up over a continuous range: a sum over infinitely many thin slices.</td></tr>
+  <tr><td>P(A)</td><td>Probability of A, a number from 0 to 1.</td></tr>
+  <tr><td>P(A | B)</td><td>Probability of A among only the cases where B happened.</td></tr>
+  <tr><td>∩, ∪</td><td>“and”, “or”.</td></tr>
+  <tr><td>λ</td><td>A rate: events per hour.</td></tr>
+  <tr><td>x<sub>k</sub>, x<sup>U</sup>, x<sup>*</sup>, x̂</td><td>Type k; upper bound; allowed value; estimate from data.</td></tr>
+  <tr><td>e<sup>x</sup>, ln x</td><td>Exponential and its inverse. e⁻³ ≈ 0.05; ln 20 ≈ 3.</td></tr>
+  <tr><td>∝, ≈, ⇒</td><td>“proportional to”, “approximately”, “therefore”.</td></tr>
+  <tr><td>χ², Φ</td><td>Table values: the chi-square quantile and the bell-curve tail. You look them up; you never compute them by hand.</td></tr>
+  </table>
+  <h3>Learn the maths in this order</h3><p>Each foundation card has a step-by-step lesson that starts from school maths, a worked robotaxi example and a question to check yourself.</p>
+  <div class="mpath">${MATHPATH.map((m,i)=>`<button class="prelink" data-go="${m}">${i+1} · ${byId[m].t}</button>`).join("")}</div>
+  <p style="display:flex;gap:8px;flex-wrap:wrap"><button class="solid" id="primerTour">Start the guided tour</button><button id="primerMath">Walk the maths path</button></p></div>`;
+  document.getElementById("tourBar").hidden=true;panel.hidden=false;document.getElementById("hint").hidden=true;
+  document.getElementById("primerTour").addEventListener("click",()=>{ACT=TOUR;tourIdx=0;select(ACT[0]);});
+  document.getElementById("primerMath").addEventListener("click",()=>{ACT=MATHPATH;tourIdx=0;select(ACT[0]);});
+}
+function clearSel(){selected=null;tourIdx=-1;panel.hidden=true;clearHi();}
+document.getElementById("pBody").addEventListener("click",ev=>{const b=ev.target.closest("[data-go]");if(b){tourIdx=-1;select(b.dataset.go);}});
+document.getElementById("pClose").addEventListener("click",clearSel);
+document.getElementById("keyBtn").addEventListener("click",showKey);
+document.getElementById("startBtn").addEventListener("click",showPrimer);
+document.getElementById("tourBtn").addEventListener("click",()=>{ACT=TOUR;tourIdx=0;select(ACT[0]);});
+document.getElementById("tourNext").addEventListener("click",()=>{if(tourIdx>=ACT.length-1){clearSel();fit();return;}tourIdx++;select(ACT[tourIdx]);});
+document.getElementById("tourPrev").addEventListener("click",()=>{if(tourIdx>0){tourIdx--;select(ACT[tourIdx]);}});
+document.getElementById("fitBtn").addEventListener("click",()=>fit());
+const exBtn=document.getElementById("exBtn"),mathBtn=document.getElementById("mathBtn");
+exBtn.addEventListener("click",()=>{const on=exBtn.getAttribute("aria-pressed")!=="true";exBtn.setAttribute("aria-pressed",on);world.classList.toggle("ex",on);layout();if(selected)select(selected,{fly:false});});
+mathBtn.addEventListener("click",()=>{const on=mathBtn.getAttribute("aria-pressed")!=="true";mathBtn.setAttribute("aria-pressed",on);world.classList.toggle("nomath",!on);});
+document.getElementById("zoomIn").addEventListener("click",()=>{const r=stage.getBoundingClientRect();zoomAt(1.25,r.width/2,r.height/2);});
+document.getElementById("zoomOut").addEventListener("click",()=>{const r=stage.getBoundingClientRect();zoomAt(0.8,r.width/2,r.height/2);});
+world.addEventListener("keydown",ev=>{const nd=ev.target.closest&&ev.target.closest(".node");if(nd&&(ev.key==="Enter"||ev.key===" ")){ev.preventDefault();tourIdx=-1;select(nd.dataset.id);}});
+
+/* ---------- pointer: pan, pinch, tap ---------- */
+const ptrs=new Map();let down=null,moved=false,pinch=null;
+stage.addEventListener("pointerdown",ev=>{if(ev.target.closest(".panel"))return;stage.setPointerCapture(ev.pointerId);ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(ptrs.size===1){down={x:ev.clientX,y:ev.clientY,vx:view.x,vy:view.y,target:ev.target};moved=false;}
+  if(ptrs.size===2){const [a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y),s:view.s};moved=true;}cancelAnimationFrame(animId);});
+stage.addEventListener("pointermove",ev=>{if(!ptrs.has(ev.pointerId))return;ptrs.set(ev.pointerId,{x:ev.clientX,y:ev.clientY});
+  if(ptrs.size===2&&pinch){const [a,b]=[...ptrs.values()];const r=stage.getBoundingClientRect();zoomAt(clampS(pinch.s*Math.hypot(a.x-b.x,a.y-b.y)/pinch.d)/view.s,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);return;}
+  if(down&&ptrs.size===1){const dx=ev.clientX-down.x,dy=ev.clientY-down.y;if(!moved&&Math.hypot(dx,dy)>5){moved=true;stage.classList.add("drag");}if(moved){view.x=down.vx+dx;view.y=down.vy+dy;apply();}}});
+function up(ev){if(!ptrs.has(ev.pointerId))return;ptrs.delete(ev.pointerId);
+  if(ptrs.size===0){stage.classList.remove("drag");if(down&&!moved){const nd=down.target.closest&&down.target.closest(".node");if(nd){tourIdx=-1;select(nd.dataset.id);}else if(!panel.hidden)clearSel();}down=null;pinch=null;}
+  else{const [p]=[...ptrs.values()];down={x:p.x,y:p.y,vx:view.x,vy:view.y,target:stage};pinch=null;}}
+stage.addEventListener("pointerup",up);stage.addEventListener("pointercancel",up);
+stage.addEventListener("wheel",ev=>{if(ev.target.closest(".panel"))return;ev.preventDefault();const r=stage.getBoundingClientRect();
+  const mouseWheel=ev.deltaMode!==0||(ev.deltaX===0&&Math.abs(ev.deltaY)>=40&&Number.isInteger(ev.deltaY));
+  if(ev.ctrlKey||mouseWheel)zoomAt(Math.exp(-ev.deltaY*(ev.ctrlKey?0.01:0.0018)),ev.clientX-r.left,ev.clientY-r.top);else{view.x-=ev.deltaX;view.y-=ev.deltaY;apply();}},{passive:false});
+
+layout();fit(false);
+function fromHash(){const h=location.hash.slice(1).replace(/-/g,"_");if(byId[h]){tourIdx=-1;select(h);return true;}return false;}
+addEventListener("hashchange",fromHash);
+let seen=false;try{seen=localStorage.getItem("atlas-primer-seen")==="1";localStorage.setItem("atlas-primer-seen","1");}catch(e){}
+if(!fromHash()&&!seen){showPrimer();fit(false);}
+(document.fonts&&document.fonts.ready?document.fonts.ready:Promise.resolve()).then(()=>{layout();if(!selected)fit(false);});
+addEventListener("resize",()=>{if(panel.hidden)fit(false);});
+</script>
+
+</body></html>
